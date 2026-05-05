@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -20,6 +20,6 @@
       },
       "package": "com.fishlogpro.app"
     },
-    "plugins": ["expo-sqlite", "expo-print", "expo-file-system"]
+    "plugins": ["expo-sqlite", "expo-file-system"]
   }
 }
