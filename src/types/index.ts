@@ -74,21 +74,19 @@ export interface FishName {
 
 // ── Navigation ──────────────────────────────────────────────────
 export type RootStackParamList = {
-  MainTabs: undefined;
-  NewPurchaseEntry: { fishermenId?: number };
-  EntryDetail: { entryId: number };
-  NewSalesOrder: { buyerId?: number };
-  OrderDetail: { orderId: number };
-  PaymentsScreen: {
-    referenceType: 'purchase' | 'sale';
-    referenceId: number;
-    name: string;
-  };
-  StatementScreen: { type: 'fisherman' | 'buyer'; id: number; name: string };
-  BackupRestore: undefined;
-  Settings: undefined;
-  AddFisherman: { fishermenId?: number };
-  AddBuyer: { buyerId?: number };
+  MainTabs:              undefined;
+  NewPurchaseEntry:      { fishermenId?: number };
+  EntryDetail:           { entryId: number };
+  NewSalesOrder:         { buyerId?: number };
+  OrderDetail:           { orderId: number };
+  PaymentsScreen:        { referenceType: 'purchase' | 'sale'; referenceId: number; name: string };
+  StatementScreen:       { type: 'fisherman' | 'buyer'; id: number; name: string };
+  BackupRestore:         undefined;
+  Settings:              undefined;
+  AddFisherman:          { fishermenId?: number };
+  AddBuyer:              { buyerId?: number };
+  FishermanDetail:       { fishermenId: number; name: string };   // ← new
+  BuyerDetail:           { buyerId: number; name: string };        // ← new
 };
 
 export type TabParamList = {

@@ -16,6 +16,9 @@ import BackupRestoreScreen    from '../screens/backup/BackupRestoreScreen';
 import AddFishermanScreen     from '../screens/fishermen/AddFishermanScreen';
 import AddBuyerScreen         from '../screens/buyers/AddBuyerScreen';
 import SettingsScreen         from '../screens/settings/SettingsScreen';
+import FishermanDetailScreen from '../screens/fishermen/FishermanDetailScreen';
+import BuyerDetailScreen     from '../screens/buyers/BuyerDetailScreen';
+
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -96,6 +99,16 @@ export default function RootNavigator() {
           component={SettingsScreen}
           options={{ title: 'Settings' }}
         />
+        <Stack.Screen
+  name="FishermanDetail"
+  component={FishermanDetailScreen}
+  options={({ route }) => ({ title: route.params.name })}
+/>
+<Stack.Screen
+  name="BuyerDetail"
+  component={BuyerDetailScreen}
+  options={({ route }) => ({ title: route.params.name })}
+/>
       </Stack.Navigator>
     </NavigationContainer>
   );

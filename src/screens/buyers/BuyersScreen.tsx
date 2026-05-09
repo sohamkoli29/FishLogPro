@@ -415,7 +415,7 @@ export default function BuyersScreen() {
           <BuyerCard
             key={item.id}
             item={item}
-            onPress={() => navigation.navigate('NewSalesOrder', { buyerId: item.id })}
+            onPress={() => navigation.navigate('BuyerDetail', { buyerId: item.id, name: item.name })}
             onEdit={() => navigation.navigate('AddBuyer', { buyerId: item.id })}
             onDelete={() => handleDelete(item.id)}
           />

@@ -405,7 +405,7 @@ export default function FishermenScreen() {
           <FishermanCard
             key={item.id}
             item={item}
-            onPress={() => navigation.navigate('NewPurchaseEntry', { fishermenId: item.id })}
+            onPress={() => navigation.navigate('FishermanDetail', { fishermenId: item.id, name: item.name })}
             onEdit={() => navigation.navigate('AddFisherman', { fishermenId: item.id })}
             onDelete={() => handleDelete(item.id)}
           />
