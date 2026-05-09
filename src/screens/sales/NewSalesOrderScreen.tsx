@@ -375,7 +375,7 @@ export default function NewSalesOrderScreen() {
       );
       console.log('✅ Sales order created:', orderId);
       await new Promise((r) => setTimeout(r, 100));
-      navigation.goBack();
+(navigation as any).replace('OrderDetail', { orderId });
     } catch (err) {
       console.error('❌ Create order error:', err);
       Alert.alert('Error', String(err));
