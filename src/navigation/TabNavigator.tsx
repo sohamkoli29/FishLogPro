@@ -12,15 +12,24 @@ import BuyersScreen from '../screens/buyers/BuyersScreen';
 import RegisterScreen from '../screens/register/RegisterScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 
+import {
+  House,
+  Ship,
+  Handshake,
+  ClipboardList,
+  Settings,
+} from 'lucide-react-native';
+
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const TABS = [
-  { name: 'Home' as const,       label: 'Home',      icon: '🏠' },
-  { name: 'Fishermen' as const,  label: 'Fishermen', icon: '⛵' },
-  { name: 'Buyers' as const,     label: 'Buyers',    icon: '🤝' },
-  { name: 'Register' as const,   label: 'Register',  icon: '📋' },
-  { name: 'SettingsTab' as const,label: 'Settings',  icon: '⚙️' },
+  { name: 'Home' as const, label: 'Home', icon: House },
+  { name: 'Fishermen' as const, label: 'Fishermen', icon: Ship },
+  { name: 'Buyers' as const, label: 'Buyers', icon: Handshake },
+  { name: 'Register' as const, label: 'Register', icon: ClipboardList },
+  { name: 'SettingsTab' as const, label: 'Settings', icon: Settings },
 ];
+
 
 function CustomTabBar({ state, navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -58,34 +67,46 @@ function CustomTabBar({ state, navigation }: any) {
         };
 
         return (
-          <TouchableOpacity
-            key={route.key}
-            onPress={onPress}
-            activeOpacity={0.7}
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingVertical: 6,
-              borderRadius: 12,
-              backgroundColor: isFocused
-                ? 'rgba(6,95,70,0.08)'
-                : 'transparent',
-            }}
-          >
-            <Text style={{ fontSize: 20, marginBottom: 2 }}>{tab.icon}</Text>
-            <Text
-              style={{
-                fontSize: 9,
-                fontWeight: '700',
-                letterSpacing: 0.5,
-                textTransform: 'uppercase',
-                color: isFocused ? Colors.emerald800 : Colors.outline,
-              }}
-            >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+  key={route.key}
+  onPress={onPress}
+  activeOpacity={0.7}
+  style={{
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: isFocused
+      ? 'rgba(6,95,70,0.08)'
+      : 'transparent',
+  }}
+>
+  {(() => {
+    const Icon = tab.icon;
+
+    return (
+      <Icon
+        size={22}
+        color={isFocused ? Colors.emerald800 : Colors.outline}
+        strokeWidth={2.3}
+      />
+    );
+  })()}
+
+  <Text
+    style={{
+      fontSize: 9,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+      color: isFocused ? Colors.emerald800 : Colors.outline,
+      marginTop: 4,
+    }}
+  >
+    {tab.label}
+  </Text>
+</TouchableOpacity>
         );
       })}
     </View>
