@@ -31,6 +31,7 @@ import {
   PurchaseBillData,
   SalesBillData,
   BillItem,
+  SingleBillPage, 
 } from '../../utils/pdfGenerator';
 
 type RouteT = RouteProp<RootStackParamList, 'StatementScreen'>;
@@ -271,29 +272,19 @@ export default function StatementScreen() {
   const deselectAll = () => setSelectedIds(new Set());
 
   // ── Build bill data for selected entries ──
-  const buildBillData = useCallback(async (): Promise<BillData> => {
-    const selected = billList.filter((b) => selectedIds.has(b.id));
-    const billNumber = `${id}-${Date.now().toString().slice(-6)}`;
+const buildBillData = useCallback(async (): Promise<BillData> => {
+  const selected = billList.filter((b) => selectedIds.has(b.id));
 
-    if (isPurchase) {
-      // Fetch all items for selected entries
-      const allItems: BillItem[] = [];
-      const allPayments: { date: string; amount: number; mode: string }[] = [];
-
-      for (const entry of selected) {
+  if (isPurchase) {
+    const pages: SingleBillPage[] = await Promise.all(
+      selected.map(async (entry) => {
+        // Items for this entry
         const items = await db
           .select()
           .from(purchaseItems)
           .where(eq(purchaseItems.entryId, entry.id));
 
-        allItems.push(...items.map((item) => ({
-          fishName:     item.fishName,
-          quantity:     item.quantity,
-          unit:         item.unit,
-          pricePerUnit: item.pricePerUnit,
-          totalPrice:   item.totalPrice,
-        })));
-
+        // Payments for this entry
         const pmts = await db
           .select()
           .from(payments)
@@ -302,50 +293,49 @@ export default function StatementScreen() {
                 AND ${payments.referenceId} = ${entry.id}`
           );
 
-        allPayments.push(...pmts.map((p) => ({
-          date:   p.paymentDate,
-          amount: p.amount,
-          mode:   p.mode,
-        })));
-      }
+        const totalPaid = pmts.reduce((s, p) => s + p.amount, 0);
 
-      const totalAmount = selected.reduce((s, e) => s + e.amount,  0);
-      const totalPaid   = selected.reduce((s, e) => s + (e.amount - e.balance), 0);
+        return {
+          billNumber: `P${entry.id}`,
+          date:       entry.date,
+          items:      items.map((item) => ({
+            fishName:     item.fishName,
+            quantity:     item.quantity,
+            unit:         item.unit,
+            pricePerUnit: item.pricePerUnit,
+            totalPrice:   item.totalPrice,
+          })),
+          totalAmount: entry.amount,
+          totalPaid,
+          balance:     entry.amount - totalPaid,
+          payments:    pmts.map((p) => ({
+            date:   p.paymentDate,
+            amount: p.amount,
+            mode:   p.mode,
+          })),
+        };
+      })
+    );
 
-      return {
-        type:          'purchase',
-        billNumber,
-        date:          selected[0]?.date ?? '',
-        businessName,
-        fishermanName: partyDetails.name,
-        boatName:      partyDetails.boatName ?? '',
-        phone:         partyDetails.phone,
-        items:         allItems,
-        totalAmount,
-        totalPaid,
-        balance:       totalAmount - totalPaid,
-        payments:      allPayments,
-      } as PurchaseBillData;
+    return {
+      type:          'purchase',
+      businessName,
+      fishermanName: partyDetails.name,
+      boatName:      partyDetails.boatName ?? '',
+      phone:         partyDetails.phone,
+      pages,
+    } as PurchaseBillData;
 
-    } else {
-      // Sales
-      const allItems: BillItem[] = [];
-      const allPayments: { date: string; amount: number; mode: string }[] = [];
-
-      for (const order of selected) {
+  } else {
+    const pages: SingleBillPage[] = await Promise.all(
+      selected.map(async (order) => {
+        // Items for this order
         const items = await db
           .select()
           .from(salesItems)
           .where(eq(salesItems.orderId, order.id));
 
-        allItems.push(...items.map((item) => ({
-          fishName:     item.fishName,
-          quantity:     item.quantity,
-          unit:         item.unit,
-          pricePerUnit: item.pricePerUnit,
-          totalPrice:   item.totalPrice,
-        })));
-
+        // Payments for this order
         const pmts = await db
           .select()
           .from(payments)
@@ -354,39 +344,40 @@ export default function StatementScreen() {
                 AND ${payments.referenceId} = ${order.id}`
           );
 
-        allPayments.push(...pmts.map((p) => ({
-          date:   p.paymentDate,
-          amount: p.amount,
-          mode:   p.mode,
-        })));
-      }
+        const totalPaid = pmts.reduce((s, p) => s + p.amount, 0);
 
-      const totalAmount = selected.reduce((s, o) => s + o.amount,  0);
-      const totalPaid   = selected.reduce((s, o) => s + (o.amount - o.balance), 0);
+        return {
+          billNumber: `S${order.id}`,
+          date:       order.date,
+          items:      items.map((item) => ({
+            fishName:     item.fishName,
+            quantity:     item.quantity,
+            unit:         item.unit,
+            pricePerUnit: item.pricePerUnit,
+            totalPrice:   item.totalPrice,
+          })),
+          totalAmount: order.amount,
+          totalPaid,
+          balance:     order.amount - totalPaid,
+          payments:    pmts.map((p) => ({
+            date:   p.paymentDate,
+            amount: p.amount,
+            mode:   p.mode,
+          })),
+        };
+      })
+    );
 
-      const [firstOrder] = await db
-        .select({ status: salesOrders.status })
-        .from(salesOrders)
-        .where(eq(salesOrders.id, selected[0]?.id ?? 0))
-        .limit(1);
-
-      return {
-        type:         'sales',
-        billNumber,
-        date:         selected[0]?.date ?? '',
-        businessName,
-        buyerName:    partyDetails.name,
-        buyerType:    partyDetails.type ?? 'other',
-        phone:        partyDetails.phone,
-        status:       firstOrder?.status ?? 'pending',
-        items:        allItems,
-        totalAmount,
-        totalPaid,
-        balance:      totalAmount - totalPaid,
-        payments:     allPayments,
-      } as SalesBillData;
-    }
-  }, [billList, selectedIds, id, isPurchase, businessName, partyDetails]);
+    return {
+      type:         'sales',
+      businessName,
+      buyerName:    partyDetails.name,
+      buyerType:    partyDetails.type ?? 'other',
+      phone:        partyDetails.phone,
+      pages,
+    } as SalesBillData;
+  }
+}, [billList, selectedIds, id, isPurchase, businessName, partyDetails]);
 
   // ── Generate PDF ──
   const handleGenerate = async () => {
