@@ -332,32 +332,62 @@ export default function BuyerDetailScreen() {
 
         {/* ── Orders header ── */}
         <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: Spacing.md,
-        }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.onSurface }}>
-            Sales Orders
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('NewSalesOrder', { buyerId })}
-            style={{
-              backgroundColor: Colors.secondary,
-              borderRadius: 10,
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            <Text style={{ color: Colors.onSecondary, fontSize: 16, lineHeight: 20 }}>+</Text>
-            <Text style={{ color: Colors.onSecondary, fontSize: 13, fontWeight: '600' }}>
-              New Order
-            </Text>
-          </TouchableOpacity>
-        </View>
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: Spacing.md,
+  flexWrap: 'wrap',
+  gap: Spacing.sm,
+}}>
+  <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.onSurface }}>
+    Sales Orders
+  </Text>
+  <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+    {/* Bill button */}
+    <TouchableOpacity
+      onPress={() => navigation.navigate('StatementScreen', {
+        type: 'buyer',
+        id:   buyerId,
+        name,
+      })}
+      style={{
+        backgroundColor: Colors.surfaceContainerHigh,
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant,
+      }}
+    >
+      <Text style={{ fontSize: 14 }}>📄</Text>
+      <Text style={{ color: Colors.onSurface, fontSize: 13, fontWeight: '600' }}>
+        Invoice
+      </Text>
+    </TouchableOpacity>
+
+    {/* New Order button */}
+    <TouchableOpacity
+      onPress={() => navigation.navigate('NewSalesOrder', { buyerId })}
+      style={{
+        backgroundColor: Colors.secondary,
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+      }}
+    >
+      <Text style={{ color: Colors.onSecondary, fontSize: 16, lineHeight: 20 }}>+</Text>
+      <Text style={{ color: Colors.onSecondary, fontSize: 13, fontWeight: '600' }}>
+        New Order
+      </Text>
+    </TouchableOpacity>
+  </View>
+</View>
 
         {/* ── Loading ── */}
         {loading && orders.length === 0 && (

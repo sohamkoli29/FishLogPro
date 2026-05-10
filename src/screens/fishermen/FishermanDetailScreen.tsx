@@ -317,6 +317,8 @@ export default function FishermanDetailScreen() {
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: Spacing.md,
+          flexWrap: 'wrap',
+          gap: Spacing.sm,
         }}>
           <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.onSurface }}>
             Purchase Entries
@@ -338,6 +340,30 @@ export default function FishermanDetailScreen() {
               New Entry
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+  onPress={() => navigation.navigate('StatementScreen', {
+    type: 'fisherman',
+    id:   fishermenId,
+    name,
+  })}
+  style={{
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+  }}
+>
+  <Text style={{ fontSize: 14 }}>📄</Text>
+  <Text style={{ color: Colors.onSurface, fontSize: 13, fontWeight: '600' }}>
+    Bill
+  </Text>
+</TouchableOpacity>
         </View>
 
         {/* ── Loading ── */}
