@@ -75,6 +75,11 @@ export function runMigrations(): void {
       id   INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT    NOT NULL UNIQUE
     );
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
 
   console.log('[DB] Migrations complete');
