@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { eq, sql, desc } from 'drizzle-orm';
+import { eq, sql, desc, and, gte, lte, between } from 'drizzle-orm';
 
 import { RootStackParamList } from '../../types';
 import { Colors, Spacing } from '../../utils/theme';
@@ -31,10 +32,12 @@ import {
   PurchaseBillData,
   SalesBillData,
   BillItem,
-  SingleBillPage, 
+  SingleBillPage,
 } from '../../utils/pdfGenerator';
 
 type RouteT = RouteProp<RootStackParamList, 'StatementScreen'>;
+
+type FilterMode = 'all' | 'single' | 'range';
 
 // ── Helpers ────────────────────────────────────────────────────
 function formatDate(dateStr: string): string {
@@ -45,7 +48,95 @@ function formatDate(dateStr: string): string {
   return `${dd} ${months[parseInt(mm) - 1]} ${yyyy}`;
 }
 
-// ── Entry/Order row for list ───────────────────────────────────
+function todayString(): string {
+  const d    = new Date();
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// Validate YYYY-MM-DD format loosely
+function isValidDate(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+// ── Filter pill ────────────────────────────────────────────────
+function FilterPill({
+  label,
+  active,
+  onPress,
+}: {
+  label:   string;
+  active:  boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 99,
+        borderWidth: 1.5,
+        borderColor: active ? Colors.primary : Colors.outlineVariant,
+        backgroundColor: active ? Colors.primaryFixed : Colors.surfaceContainerLowest,
+      }}
+    >
+      <Text style={{
+        fontSize: 13,
+        fontWeight: '600',
+        color: active ? Colors.onPrimaryFixed : Colors.onSurfaceVariant,
+      }}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+// ── Date input ─────────────────────────────────────────────────
+function DateInput({
+  label,
+  value,
+  onChange,
+}: {
+  label:    string;
+  value:    string;
+  onChange: (v: string) => void;
+}) {
+  const isValid = value === '' || isValidDate(value);
+  return (
+    <View style={{ flex: 1 }}>
+      <Text style={{
+        fontSize: 10, fontWeight: '700', letterSpacing: 0.8,
+        color: Colors.onSurfaceVariant, marginBottom: 4,
+        textTransform: 'uppercase',
+      }}>
+        {label}
+      </Text>
+      <TextInput
+        style={{
+          backgroundColor: Colors.surfaceContainerLowest,
+          borderRadius: 10,
+          borderWidth: 1.5,
+          borderColor: isValid ? Colors.outlineVariant : Colors.error,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          fontSize: 14,
+          color: Colors.onSurface,
+        }}
+        placeholder="YYYY-MM-DD"
+        placeholderTextColor={Colors.outline}
+        value={value}
+        onChangeText={onChange}
+        keyboardType="numeric"
+        maxLength={10}
+      />
+    </View>
+  );
+}
+
+// ── Bill row ───────────────────────────────────────────────────
 function BillRow({
   id,
   date,
@@ -136,8 +227,14 @@ export default function StatementScreen() {
 
   const isPurchase = type === 'fisherman';
 
-  // List of all entries/orders for this party
-  const [billList, setBillList] = useState<{
+  // ── Filter state ──
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [singleDate, setSingleDate] = useState(todayString());
+  const [fromDate,   setFromDate]   = useState('');
+  const [tillDate,   setTillDate]   = useState(todayString());
+
+  // ── Data state ──
+  const [billList,    setBillList]    = useState<{
     id: number; date: string; amount: number; balance: number;
   }[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -145,7 +242,6 @@ export default function StatementScreen() {
   const [generating,  setGenerating]  = useState(false);
   const [printing,    setPrinting]    = useState(false);
 
-  // Party details
   const [partyDetails, setPartyDetails] = useState<{
     name: string;
     boatName?: string;
@@ -153,13 +249,28 @@ export default function StatementScreen() {
     type?: string;
   }>({ name });
 
-  // ── Load data ──
+  // ── Load data with active filter ──
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
+      // Build date filter condition string for raw sql
+      // We use sql template literals compatible with drizzle
+      let dateFilter: any = undefined;
+
+      if (filterMode === 'single' && isValidDate(singleDate)) {
+        dateFilter = singleDate;
+      } else if (
+        filterMode === 'range' &&
+        isValidDate(fromDate) &&
+        isValidDate(tillDate) &&
+        fromDate <= tillDate
+      ) {
+        // range validated
+      }
+
       if (isPurchase) {
-        // Load fisherman details
+        // Load fisherman details (once)
         const [fish] = await db
           .select()
           .from(fishermen)
@@ -174,12 +285,40 @@ export default function StatementScreen() {
           });
         }
 
-        // Load purchase entries with balance
-        const entries = await db
-          .select()
-          .from(purchaseEntries)
-          .where(eq(purchaseEntries.fishermenId, id))
-          .orderBy(desc(purchaseEntries.date));
+        // Build query with optional date filter
+        let entries;
+        if (filterMode === 'single' && isValidDate(singleDate)) {
+          entries = await db
+            .select()
+            .from(purchaseEntries)
+            .where(
+              sql`${purchaseEntries.fishermenId} = ${id}
+                  AND ${purchaseEntries.date} = ${singleDate}`
+            )
+            .orderBy(desc(purchaseEntries.date));
+        } else if (
+          filterMode === 'range' &&
+          isValidDate(fromDate) &&
+          isValidDate(tillDate) &&
+          fromDate <= tillDate
+        ) {
+          entries = await db
+            .select()
+            .from(purchaseEntries)
+            .where(
+              sql`${purchaseEntries.fishermenId} = ${id}
+                  AND ${purchaseEntries.date} >= ${fromDate}
+                  AND ${purchaseEntries.date} <= ${tillDate}`
+            )
+            .orderBy(desc(purchaseEntries.date));
+        } else {
+          // All time
+          entries = await db
+            .select()
+            .from(purchaseEntries)
+            .where(eq(purchaseEntries.fishermenId, id))
+            .orderBy(desc(purchaseEntries.date));
+        }
 
         const withBalance = await Promise.all(
           entries.map(async (e) => {
@@ -201,11 +340,10 @@ export default function StatementScreen() {
         );
 
         setBillList(withBalance);
-        // Select all by default
         setSelectedIds(new Set(withBalance.map((e) => e.id)));
 
       } else {
-        // Load buyer details
+        // Load buyer details (once)
         const [buyer] = await db
           .select()
           .from(buyers)
@@ -220,12 +358,39 @@ export default function StatementScreen() {
           });
         }
 
-        // Load sales orders with balance
-        const orders = await db
-          .select()
-          .from(salesOrders)
-          .where(eq(salesOrders.buyerId, id))
-          .orderBy(desc(salesOrders.date));
+        // Build query with optional date filter
+        let orders;
+        if (filterMode === 'single' && isValidDate(singleDate)) {
+          orders = await db
+            .select()
+            .from(salesOrders)
+            .where(
+              sql`${salesOrders.buyerId} = ${id}
+                  AND ${salesOrders.date} = ${singleDate}`
+            )
+            .orderBy(desc(salesOrders.date));
+        } else if (
+          filterMode === 'range' &&
+          isValidDate(fromDate) &&
+          isValidDate(tillDate) &&
+          fromDate <= tillDate
+        ) {
+          orders = await db
+            .select()
+            .from(salesOrders)
+            .where(
+              sql`${salesOrders.buyerId} = ${id}
+                  AND ${salesOrders.date} >= ${fromDate}
+                  AND ${salesOrders.date} <= ${tillDate}`
+            )
+            .orderBy(desc(salesOrders.date));
+        } else {
+          orders = await db
+            .select()
+            .from(salesOrders)
+            .where(eq(salesOrders.buyerId, id))
+            .orderBy(desc(salesOrders.date));
+        }
 
         const withBalance = await Promise.all(
           orders.map(async (o) => {
@@ -254,9 +419,16 @@ export default function StatementScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id, type]);
+  }, [id, type, filterMode, singleDate, fromDate, tillDate]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // ── Filter mode change — reset inputs sensibly ──
+  const handleFilterMode = (mode: FilterMode) => {
+    setFilterMode(mode);
+    if (mode === 'single' && !singleDate) setSingleDate(todayString());
+    if (mode === 'range'  && !tillDate)   setTillDate(todayString());
+  };
 
   // ── Toggle selection ──
   const toggleSelect = (entryId: number) => {
@@ -271,118 +443,114 @@ export default function StatementScreen() {
   const selectAll   = () => setSelectedIds(new Set(billList.map((b) => b.id)));
   const deselectAll = () => setSelectedIds(new Set());
 
-  // ── Build bill data for selected entries ──
-const buildBillData = useCallback(async (): Promise<BillData> => {
-  const selected = billList.filter((b) => selectedIds.has(b.id));
+  // ── Build bill data ──
+  const buildBillData = useCallback(async (): Promise<BillData> => {
+    const selected = billList.filter((b) => selectedIds.has(b.id));
 
-  if (isPurchase) {
-    const pages: SingleBillPage[] = await Promise.all(
-      selected.map(async (entry) => {
-        // Items for this entry
-        const items = await db
-          .select()
-          .from(purchaseItems)
-          .where(eq(purchaseItems.entryId, entry.id));
+    if (isPurchase) {
+      const pages: SingleBillPage[] = await Promise.all(
+        selected.map(async (entry) => {
+          const items = await db
+            .select()
+            .from(purchaseItems)
+            .where(eq(purchaseItems.entryId, entry.id));
 
-        // Payments for this entry
-        const pmts = await db
-          .select()
-          .from(payments)
-          .where(
-            sql`${payments.referenceType} = 'purchase'
-                AND ${payments.referenceId} = ${entry.id}`
-          );
+          const pmts = await db
+            .select()
+            .from(payments)
+            .where(
+              sql`${payments.referenceType} = 'purchase'
+                  AND ${payments.referenceId} = ${entry.id}`
+            );
 
-        const totalPaid = pmts.reduce((s, p) => s + p.amount, 0);
+          const totalPaid = pmts.reduce((s, p) => s + p.amount, 0);
 
-        return {
-          billNumber: `P${entry.id}`,
-          date:       entry.date,
-          items:      items.map((item) => ({
-            fishName:     item.fishName,
-            quantity:     item.quantity,
-            unit:         item.unit,
-            pricePerUnit: item.pricePerUnit,
-            totalPrice:   item.totalPrice,
-          })),
-          totalAmount: entry.amount,
-          totalPaid,
-          balance:     entry.amount - totalPaid,
-          payments:    pmts.map((p) => ({
-            date:   p.paymentDate,
-            amount: p.amount,
-            mode:   p.mode,
-          })),
-        };
-      })
-    );
+          return {
+            billNumber: `P${entry.id}`,
+            date:       entry.date,
+            items:      items.map((item) => ({
+              fishName:     item.fishName,
+              quantity:     item.quantity,
+              unit:         item.unit,
+              pricePerUnit: item.pricePerUnit,
+              totalPrice:   item.totalPrice,
+            })),
+            totalAmount: entry.amount,
+            totalPaid,
+            balance:     entry.amount - totalPaid,
+            payments:    pmts.map((p) => ({
+              date:   p.paymentDate,
+              amount: p.amount,
+              mode:   p.mode,
+            })),
+          };
+        })
+      );
 
-    return {
-      type:          'purchase',
-      businessName,
-      fishermanName: partyDetails.name,
-      boatName:      partyDetails.boatName ?? '',
-      phone:         partyDetails.phone,
-      pages,
-    } as PurchaseBillData;
+      return {
+        type:          'purchase',
+        businessName,
+        fishermanName: partyDetails.name,
+        boatName:      partyDetails.boatName ?? '',
+        phone:         partyDetails.phone,
+        pages,
+      } as PurchaseBillData;
 
-  } else {
-    const pages: SingleBillPage[] = await Promise.all(
-      selected.map(async (order) => {
-        // Items for this order
-        const items = await db
-          .select()
-          .from(salesItems)
-          .where(eq(salesItems.orderId, order.id));
+    } else {
+      const pages: SingleBillPage[] = await Promise.all(
+        selected.map(async (order) => {
+          const items = await db
+            .select()
+            .from(salesItems)
+            .where(eq(salesItems.orderId, order.id));
 
-        // Payments for this order
-        const pmts = await db
-          .select()
-          .from(payments)
-          .where(
-            sql`${payments.referenceType} = 'sale'
-                AND ${payments.referenceId} = ${order.id}`
-          );
+          const pmts = await db
+            .select()
+            .from(payments)
+            .where(
+              sql`${payments.referenceType} = 'sale'
+                  AND ${payments.referenceId} = ${order.id}`
+            );
 
-        const totalPaid = pmts.reduce((s, p) => s + p.amount, 0);
+          const totalPaid = pmts.reduce((s, p) => s + p.amount, 0);
 
-        return {
-          billNumber: `S${order.id}`,
-          date:       order.date,
-          items:      items.map((item) => ({
-            fishName:     item.fishName,
-            quantity:     item.quantity,
-            unit:         item.unit,
-            pricePerUnit: item.pricePerUnit,
-            totalPrice:   item.totalPrice,
-          })),
-          totalAmount: order.amount,
-          totalPaid,
-          balance:     order.amount - totalPaid,
-          payments:    pmts.map((p) => ({
-            date:   p.paymentDate,
-            amount: p.amount,
-            mode:   p.mode,
-          })),
-        };
-      })
-    );
+          return {
+            billNumber: `S${order.id}`,
+            date:       order.date,
+            items:      items.map((item) => ({
+              fishName:     item.fishName,
+              quantity:     item.quantity,
+              unit:         item.unit,
+              pricePerUnit: item.pricePerUnit,
+              totalPrice:   item.totalPrice,
+            })),
+            totalAmount: order.amount,
+            totalPaid,
+            balance:     order.amount - totalPaid,
+            payments:    pmts.map((p) => ({
+              date:   p.paymentDate,
+              amount: p.amount,
+              mode:   p.mode,
+            })),
+          };
+        })
+      );
 
-    return {
-      type:         'sales',
-      businessName,
-      buyerName:    partyDetails.name,
-      buyerType:    partyDetails.type ?? 'other',
-      phone:        partyDetails.phone,
-      pages,
-    } as SalesBillData;
-  }
-}, [billList, selectedIds, id, isPurchase, businessName, partyDetails]);
+      return {
+        type:         'sales',
+        businessName,
+        buyerName:    partyDetails.name,
+        buyerType:    partyDetails.type ?? 'other',
+        phone:        partyDetails.phone,
+        pages,
+      } as SalesBillData;
+    }
+  }, [billList, selectedIds, isPurchase, businessName, partyDetails]);
 
   // ── Generate PDF ──
   const handleGenerate = async () => {
     if (selectedIds.size === 0) {
-      Alert.alert('No selection', 'Please select at least one entry to generate a bill.');
+      Alert.alert('No selection', 'Please select at least one entry.');
       return;
     }
     try {
@@ -414,18 +582,28 @@ const buildBillData = useCallback(async (): Promise<BillData> => {
   };
 
   // ── Summary of selected ──
-  const selectedEntries  = billList.filter((b) => selectedIds.has(b.id));
-  const selectedTotal    = selectedEntries.reduce((s, b) => s + b.amount,  0);
-  const selectedBalance  = selectedEntries.reduce((s, b) => s + b.balance, 0);
+  const selectedEntries = billList.filter((b) => selectedIds.has(b.id));
+  const selectedTotal   = selectedEntries.reduce((s, b) => s + b.amount,  0);
+  const selectedBalance = selectedEntries.reduce((s, b) => s + b.balance, 0);
+
+  // ── Range validation message ──
+  const rangeError =
+    filterMode === 'range' &&
+    fromDate && tillDate &&
+    isValidDate(fromDate) && isValidDate(tillDate) &&
+    fromDate > tillDate
+      ? '"From" date must be before "Till" date'
+      : null;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surface }} edges={['bottom']}>
       <ScrollView
         contentContainerStyle={{ padding: Spacing.gutter, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* ── Header ── */}
-        <View style={{ marginBottom: Spacing.xl }}>
+        <View style={{ marginBottom: Spacing.lg }}>
           <Text style={{
             fontSize: 11, fontWeight: '700', letterSpacing: 0.8,
             color: Colors.onSurfaceVariant, marginBottom: 4,
@@ -445,6 +623,79 @@ const buildBillData = useCallback(async (): Promise<BillData> => {
                 ? `${partyDetails.type.charAt(0).toUpperCase() + partyDetails.type.slice(1)}`
                 : ''}
           </Text>
+        </View>
+
+        {/* ── Date filter card ── */}
+        <View style={{
+          backgroundColor: Colors.surfaceContainerLow,
+          borderRadius: 20,
+          padding: Spacing.md,
+          marginBottom: Spacing.lg,
+        }}>
+          <Text style={{
+            fontSize: 11, fontWeight: '700', letterSpacing: 0.8,
+            color: Colors.onSurfaceVariant, marginBottom: Spacing.sm,
+          }}>
+            DATE FILTER
+          </Text>
+
+          {/* Pills */}
+          <View style={{
+            flexDirection: 'row',
+            gap: Spacing.sm,
+            marginBottom: filterMode === 'all' ? 0 : Spacing.md,
+          }}>
+            <FilterPill
+              label="All Time"
+              active={filterMode === 'all'}
+              onPress={() => handleFilterMode('all')}
+            />
+            <FilterPill
+              label="Single Date"
+              active={filterMode === 'single'}
+              onPress={() => handleFilterMode('single')}
+            />
+            <FilterPill
+              label="Date Range"
+              active={filterMode === 'range'}
+              onPress={() => handleFilterMode('range')}
+            />
+          </View>
+
+          {/* Single date input */}
+          {filterMode === 'single' && (
+            <DateInput
+              label="Date"
+              value={singleDate}
+              onChange={setSingleDate}
+            />
+          )}
+
+          {/* Range inputs */}
+          {filterMode === 'range' && (
+            <>
+              <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                <DateInput
+                  label="From"
+                  value={fromDate}
+                  onChange={setFromDate}
+                />
+                <DateInput
+                  label="Till"
+                  value={tillDate}
+                  onChange={setTillDate}
+                />
+              </View>
+              {rangeError && (
+                <Text style={{
+                  fontSize: 12, color: Colors.error,
+                  marginTop: 6,
+                }}>
+                  ⚠ {rangeError}
+                </Text>
+              )}
+            </>
+          )}
         </View>
 
         {/* ── Loading ── */}
@@ -495,7 +746,7 @@ const buildBillData = useCallback(async (): Promise<BillData> => {
                 padding: Spacing.xxl,
                 alignItems: 'center',
               }}>
-                <Text style={{ fontSize: 36, marginBottom: 12 }}>📄</Text>
+                <Text style={{ fontSize: 36, marginBottom: 12 }}>📅</Text>
                 <Text style={{
                   fontSize: 16, fontWeight: '600',
                   color: Colors.onSurface, marginBottom: 6,
@@ -504,10 +755,28 @@ const buildBillData = useCallback(async (): Promise<BillData> => {
                 </Text>
                 <Text style={{
                   fontSize: 14, color: Colors.onSurfaceVariant,
-                  textAlign: 'center',
+                  textAlign: 'center', lineHeight: 20,
                 }}>
-                  No {isPurchase ? 'purchase entries' : 'sales orders'} found for {name}.
+                  {filterMode === 'all'
+                    ? `No ${isPurchase ? 'purchase entries' : 'sales orders'} found for ${name}.`
+                    : 'No records match the selected date filter. Try "All Time" or adjust the dates.'}
                 </Text>
+                {filterMode !== 'all' && (
+                  <TouchableOpacity
+                    onPress={() => setFilterMode('all')}
+                    style={{
+                      marginTop: Spacing.md,
+                      backgroundColor: Colors.primary,
+                      borderRadius: 10,
+                      paddingHorizontal: 20,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: Colors.onPrimary, fontSize: 14, fontWeight: '600' }}>
+                      Show All Time
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
 
@@ -539,6 +808,11 @@ const buildBillData = useCallback(async (): Promise<BillData> => {
                   color: `${Colors.onPrimary}80`, marginBottom: 8,
                 }}>
                   BILL SUMMARY — {selectedIds.size} {isPurchase ? 'ENTR' : 'ORDER'}{selectedIds.size !== 1 ? 'IES' : 'Y'}
+                  {filterMode === 'single' && isValidDate(singleDate)
+                    ? `  ·  ${formatDate(singleDate)}`
+                    : filterMode === 'range' && isValidDate(fromDate) && isValidDate(tillDate)
+                      ? `  ·  ${formatDate(fromDate)} → ${formatDate(tillDate)}`
+                      : '  ·  All Time'}
                 </Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <View>
@@ -608,18 +882,14 @@ const buildBillData = useCallback(async (): Promise<BillData> => {
             {generating ? (
               <>
                 <ActivityIndicator size="small" color={Colors.onPrimary} />
-                <Text style={{
-                  color: Colors.onPrimary, fontSize: 15, fontWeight: '700',
-                }}>
+                <Text style={{ color: Colors.onPrimary, fontSize: 15, fontWeight: '700' }}>
                   Generating PDF…
                 </Text>
               </>
             ) : (
               <>
                 <Text style={{ fontSize: 18 }}>📤</Text>
-                <Text style={{
-                  color: Colors.onPrimary, fontSize: 15, fontWeight: '700',
-                }}>
+                <Text style={{ color: Colors.onPrimary, fontSize: 15, fontWeight: '700' }}>
                   Share PDF Bill
                 </Text>
               </>
@@ -645,18 +915,14 @@ const buildBillData = useCallback(async (): Promise<BillData> => {
             {printing ? (
               <>
                 <ActivityIndicator size="small" color={Colors.primary} />
-                <Text style={{
-                  color: Colors.onSurface, fontSize: 14, fontWeight: '600',
-                }}>
+                <Text style={{ color: Colors.onSurface, fontSize: 14, fontWeight: '600' }}>
                   Opening Print…
                 </Text>
               </>
             ) : (
               <>
                 <Text style={{ fontSize: 16 }}>🖨️</Text>
-                <Text style={{
-                  color: Colors.onSurface, fontSize: 14, fontWeight: '600',
-                }}>
+                <Text style={{ color: Colors.onSurface, fontSize: 14, fontWeight: '600' }}>
                   Print Bill
                 </Text>
               </>
