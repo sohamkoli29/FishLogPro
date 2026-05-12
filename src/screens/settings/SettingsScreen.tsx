@@ -15,6 +15,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { eq, asc } from 'drizzle-orm';
+import {
+  Eye,
+  EyeSlash,
+  Fish,
+  CloudArrowUp,
+  CaretRight,
+} from 'phosphor-react-native';
 
 import { RootStackParamList } from '../../types';
 import { Colors, Spacing } from '../../utils/theme';
@@ -43,9 +50,7 @@ function Section({
       marginBottom: Spacing.lg,
     }}>
       <View style={{ marginBottom: Spacing.md }}>
-        <Text style={{
-          fontSize: 16, fontWeight: '700', color: Colors.onSurface,
-        }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.onSurface }}>
           {title}
         </Text>
         {sub && (
@@ -61,11 +66,11 @@ function Section({
 
 // ── Main screen ────────────────────────────────────────────────
 export default function SettingsScreen() {
-  const navigation     = useNavigation<Nav>();
-  const businessName   = useAppStore((s) => s.businessName);
+  const navigation      = useNavigation<Nav>();
+  const businessName    = useAppStore((s) => s.businessName);
   const setBusinessName = useAppStore((s) => s.setBusinessName);
-  const pricesVisible  = useAppStore((s) => s.pricesVisible);
-  const togglePrices   = useAppStore((s) => s.togglePricesVisible);
+  const pricesVisible   = useAppStore((s) => s.pricesVisible);
+  const togglePrices    = useAppStore((s) => s.togglePricesVisible);
 
   // ── Business name ──
   const [nameInput,  setNameInput]  = useState(businessName);
@@ -127,7 +132,6 @@ export default function SettingsScreen() {
       return;
     }
 
-    // Check duplicate
     const exists = fishList.some(
       (f) => f.name.toLowerCase() === trimmed.toLowerCase()
     );
@@ -267,13 +271,21 @@ export default function SettingsScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-                <Text style={{ fontSize: 24 }}>
-                  {pricesVisible ? '👁' : '🙈'}
-                </Text>
+                <View style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  backgroundColor: pricesVisible
+                    ? Colors.primaryFixed
+                    : Colors.surfaceContainerHigh,
+                  justifyContent: 'center', alignItems: 'center',
+                }}>
+                  {pricesVisible ? (
+                    <Eye size={22} color={Colors.onPrimaryFixed} weight="duotone" />
+                  ) : (
+                    <EyeSlash size={22} color={Colors.onSurfaceVariant} weight="duotone" />
+                  )}
+                </View>
                 <View>
-                  <Text style={{
-                    fontSize: 15, fontWeight: '600', color: Colors.onSurface,
-                  }}>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.onSurface }}>
                     Show Prices
                   </Text>
                   <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant }}>
@@ -365,12 +377,8 @@ export default function SettingsScreen() {
                 overflow: 'hidden',
               }}>
                 {fishList.length === 0 ? (
-                  <View style={{
-                    alignItems: 'center', padding: Spacing.xl,
-                  }}>
-                    <Text style={{
-                      fontSize: 14, color: Colors.onSurfaceVariant,
-                    }}>
+                  <View style={{ alignItems: 'center', padding: Spacing.xl }}>
+                    <Text style={{ fontSize: 14, color: Colors.onSurfaceVariant }}>
                       No fish names yet. Add one above.
                     </Text>
                   </View>
@@ -389,10 +397,8 @@ export default function SettingsScreen() {
                       }}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <Text style={{ fontSize: 14 }}>🐟</Text>
-                        <Text style={{
-                          fontSize: 15, color: Colors.onSurface, fontWeight: '500',
-                        }}>
+                        <Fish size={16} color={Colors.primary} weight="duotone" />
+                        <Text style={{ fontSize: 15, color: Colors.onSurface, fontWeight: '500' }}>
                           {fish.name}
                         </Text>
                       </View>
@@ -422,10 +428,10 @@ export default function SettingsScreen() {
           {/* ── App info ── */}
           <Section title="About">
             {[
-              { label: 'App Name',  value: 'FishLog Pro'   },
-              { label: 'Version',   value: '1.0.0'         },
-              { label: 'Database',  value: 'SQLite (Local)' },
-              { label: 'Storage',   value: 'On-Device Only' },
+              { label: 'App Name',  value: 'FishLog Pro'    },
+              { label: 'Version',   value: '1.0.0'          },
+              { label: 'Database',  value: 'SQLite (Local)'  },
+              { label: 'Storage',   value: 'On-Device Only'  },
             ].map((item, i, arr) => (
               <View
                 key={item.label}
@@ -441,9 +447,7 @@ export default function SettingsScreen() {
                 <Text style={{ fontSize: 14, color: Colors.onSurfaceVariant }}>
                   {item.label}
                 </Text>
-                <Text style={{
-                  fontSize: 14, fontWeight: '600', color: Colors.onSurface,
-                }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.onSurface }}>
                   {item.value}
                 </Text>
               </View>
@@ -469,12 +473,10 @@ export default function SettingsScreen() {
                 backgroundColor: Colors.primaryFixed,
                 justifyContent: 'center', alignItems: 'center',
               }}>
-                <Text style={{ fontSize: 22 }}>☁️</Text>
+                <CloudArrowUp size={24} color={Colors.onPrimaryFixed} weight="duotone" />
               </View>
               <View>
-                <Text style={{
-                  fontSize: 15, fontWeight: '600', color: Colors.onSurface,
-                }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.onSurface }}>
                   Backup & Restore
                 </Text>
                 <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant }}>
@@ -482,7 +484,7 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={{ fontSize: 20, color: Colors.outline }}>›</Text>
+            <CaretRight size={20} color={Colors.outline} weight="bold" />
           </TouchableOpacity>
 
         </ScrollView>

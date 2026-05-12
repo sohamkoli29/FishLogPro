@@ -8,6 +8,23 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
+
+import {
+  MagnifyingGlass,
+  X,
+  Boat,
+  TrendUp,
+  TrendDown,
+  HandCoins,
+  Money,
+  Storefront,
+  User,
+  Factory,
+  Buildings,
+  CheckCircle,
+  Handshake,
+  Warning,
+} from "phosphor-react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -77,7 +94,7 @@ function SearchBar({
       borderWidth: 1,
       borderColor: value ? Colors.primary : Colors.outlineVariant,
     }}>
-      <Text style={{ fontSize: 16 }}>🔍</Text>
+      <MagnifyingGlass size={18} color={Colors.onSurfaceVariant} weight="bold" />
       <TextInput
         style={{ flex: 1, fontSize: 15, color: Colors.onSurface, padding: 0 }}
         placeholder="Search fishermen or buyers…"
@@ -89,7 +106,7 @@ function SearchBar({
       />
       {value.length > 0 && (
         <TouchableOpacity onPress={() => onChange('')}>
-          <Text style={{ fontSize: 16, color: Colors.outline }}>✕</Text>
+          <X size={18} color={Colors.outline} weight="bold" />
         </TouchableOpacity>
       )}
     </View>
@@ -145,6 +162,15 @@ function formatDate(dateStr: string | null): string {
   const months = ['Jan','Feb','Mar','Apr','May','Jun',
                   'Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${dd} ${months[parseInt(mm) - 1]} ${yyyy}`;
+}
+
+// ── Buyer type icon ────────────────────────────────────────────
+function BuyerTypeIcon({ type }: { type: string }) {
+  const size  = 22;
+  const color = Colors.onSecondaryContainer;
+  if (type === 'supplier') return <Factory size={size} color={color} weight="duotone" />;
+  if (type === 'company')  return <Buildings size={size} color={color} weight="duotone" />;
+  return <User size={size} color={color} weight="duotone" />;
 }
 
 // ── Main screen ────────────────────────────────────────────────
@@ -365,9 +391,12 @@ export default function RegisterScreen() {
                 ₹{Math.abs(data.netProfit).toLocaleString('en-IN')}
               </Text>
               {data.netProfit < 0 && (
-                <Text style={{ fontSize: 13, color: Colors.errorContainer, marginTop: 4 }}>
-                  ⚠️ Loss — purchases exceed sales
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                  <Warning size={14} color={Colors.errorContainer} weight="fill" />
+                  <Text style={{ fontSize: 13, color: Colors.errorContainer }}>
+                    Loss — purchases exceed sales
+                  </Text>
+                </View>
               )}
 
               <View style={{
@@ -433,7 +462,12 @@ export default function RegisterScreen() {
                 alignItems: 'center',
                 marginBottom: Spacing.lg,
               }}>
-                <Text style={{ fontSize: 36, marginBottom: 12 }}>🔍</Text>
+                <MagnifyingGlass
+                  size={36}
+                  color={Colors.primary}
+                  weight="duotone"
+                  style={{ marginBottom: 12 }}
+                />
                 <Text style={{ fontSize: 16, fontWeight: '600', color: Colors.onSurface, marginBottom: 6 }}>
                   No Results
                 </Text>
@@ -467,7 +501,7 @@ export default function RegisterScreen() {
                       Outstanding payments for catch deliveries
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 24 }}>⛵</Text>
+                  <Boat size={28} color={Colors.primary} weight="duotone" />
                 </View>
 
                 {filteredFishermen.map((f, i) => (
@@ -499,9 +533,12 @@ export default function RegisterScreen() {
                       <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.onSurface }}>
                         {f.name}
                       </Text>
-                      <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant }}>
-                        ⛵ {f.boatName} • {formatDate(f.lastEntry)}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                        <Boat size={11} color={Colors.onSurfaceVariant} weight="fill" />
+                        <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant }}>
+                          {f.boatName} • {formatDate(f.lastEntry)}
+                        </Text>
+                      </View>
                     </View>
 
                     <View style={{ alignItems: 'flex-end', gap: 3 }}>
@@ -567,7 +604,7 @@ export default function RegisterScreen() {
                       Uncollected revenue from sales
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 24 }}>🤝</Text>
+                  <Handshake size={28} color={Colors.secondary} weight="duotone" />
                 </View>
 
                 {filteredBuyers.map((b, i) => (
@@ -590,9 +627,7 @@ export default function RegisterScreen() {
                       justifyContent: 'center', alignItems: 'center',
                       flexShrink: 0,
                     }}>
-                      <Text style={{ fontSize: 20 }}>
-                        {b.type === 'supplier' ? '🏭' : b.type === 'company' ? '🏢' : '👤'}
-                      </Text>
+                      <BuyerTypeIcon type={b.type} />
                     </View>
 
                     <View style={{ flex: 1 }}>

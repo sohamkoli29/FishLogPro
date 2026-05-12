@@ -9,9 +9,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  Export,
+  DownloadSimple,
+  Warning,
+  CheckCircle,
+  XCircle,
+} from 'phosphor-react-native';
 
 import { Colors, Spacing } from '../../utils/theme';
 import { exportBackup, importBackup, getDbStats } from '../../utils/backup';
+
 
 // ── Helpers ────────────────────────────────────────────────────
 function formatDateDisplay(iso: string): string {
@@ -193,9 +201,7 @@ export default function BackupRestoreScreen() {
               borderTopWidth: 1,
               borderTopColor: `${Colors.onPrimary}20`,
             }}>
-              <Text style={{
-                fontSize: 12, color: `${Colors.onPrimary}70`,
-              }}>
+              <Text style={{ fontSize: 12, color: `${Colors.onPrimary}70` }}>
                 Last export: {formatDateDisplay(lastExport)}
               </Text>
             </View>
@@ -215,12 +221,10 @@ export default function BackupRestoreScreen() {
               backgroundColor: Colors.primaryFixed,
               justifyContent: 'center', alignItems: 'center',
             }}>
-              <Text style={{ fontSize: 24 }}>📤</Text>
+              <Export size={24} color={Colors.onPrimaryFixed} weight="duotone" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{
-                fontSize: 16, fontWeight: '700', color: Colors.onSurface,
-              }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.onSurface }}>
                 Export Backup
               </Text>
               <Text style={{ fontSize: 13, color: Colors.onSurfaceVariant }}>
@@ -252,18 +256,14 @@ export default function BackupRestoreScreen() {
             {exporting ? (
               <>
                 <ActivityIndicator size="small" color={Colors.onPrimary} />
-                <Text style={{
-                  color: Colors.onPrimary, fontSize: 15, fontWeight: '700',
-                }}>
+                <Text style={{ color: Colors.onPrimary, fontSize: 15, fontWeight: '700' }}>
                   Preparing Export…
                 </Text>
               </>
             ) : (
               <>
-                <Text style={{ fontSize: 18 }}>📤</Text>
-                <Text style={{
-                  color: Colors.onPrimary, fontSize: 15, fontWeight: '700',
-                }}>
+                <Export size={20} color={Colors.onPrimary} weight="bold" />
+                <Text style={{ color: Colors.onPrimary, fontSize: 15, fontWeight: '700' }}>
                   Export & Share Backup
                 </Text>
               </>
@@ -289,12 +289,10 @@ export default function BackupRestoreScreen() {
               backgroundColor: Colors.tertiaryFixed,
               justifyContent: 'center', alignItems: 'center',
             }}>
-              <Text style={{ fontSize: 24 }}>📥</Text>
+              <DownloadSimple size={24} color={Colors.onTertiaryFixed} weight="duotone" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{
-                fontSize: 16, fontWeight: '700', color: Colors.onSurface,
-              }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.onSurface }}>
                 Restore Backup
               </Text>
               <Text style={{ fontSize: 13, color: Colors.onSurfaceVariant }}>
@@ -313,11 +311,10 @@ export default function BackupRestoreScreen() {
             borderColor: `${Colors.error}25`,
             flexDirection: 'row',
             gap: 10,
+            alignItems: 'flex-start',
           }}>
-            <Text style={{ fontSize: 18, flexShrink: 0 }}>⚠️</Text>
-            <Text style={{
-              fontSize: 13, color: Colors.onSurface, lineHeight: 20, flex: 1,
-            }}>
+            <Warning size={20} color={Colors.error} weight="fill" style={{ flexShrink: 0, marginTop: 1 }} />
+            <Text style={{ fontSize: 13, color: Colors.onSurface, lineHeight: 20, flex: 1 }}>
               Restoring will permanently overwrite ALL current data. Export a backup first to avoid losing data.
             </Text>
           </View>
@@ -340,18 +337,14 @@ export default function BackupRestoreScreen() {
             {importing ? (
               <>
                 <ActivityIndicator size="small" color={Colors.primary} />
-                <Text style={{
-                  color: Colors.onSurface, fontSize: 15, fontWeight: '700',
-                }}>
+                <Text style={{ color: Colors.onSurface, fontSize: 15, fontWeight: '700' }}>
                   Restoring…
                 </Text>
               </>
             ) : (
               <>
-                <Text style={{ fontSize: 18 }}>📥</Text>
-                <Text style={{
-                  color: Colors.onSurface, fontSize: 15, fontWeight: '700',
-                }}>
+                <DownloadSimple size={20} color={Colors.onSurface} weight="bold" />
+                <Text style={{ color: Colors.onSurface, fontSize: 15, fontWeight: '700' }}>
                   Select Backup File
                 </Text>
               </>
@@ -370,9 +363,11 @@ export default function BackupRestoreScreen() {
             marginBottom: Spacing.lg,
           }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <Text style={{ fontSize: 20 }}>
-                {restoreResult.success ? '✅' : '❌'}
-              </Text>
+              {restoreResult.success ? (
+                <CheckCircle size={22} color={Colors.onPrimaryFixed} weight="fill" />
+              ) : (
+                <XCircle size={22} color={Colors.onErrorContainer} weight="fill" />
+              )}
               <Text style={{
                 fontSize: 15, fontWeight: '700',
                 color: restoreResult.success
@@ -442,14 +437,10 @@ export default function BackupRestoreScreen() {
             borderTopWidth: 2,
             borderTopColor: Colors.outlineVariant,
           }}>
-            <Text style={{
-              fontSize: 13, fontWeight: '700', color: Colors.onSurface,
-            }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: Colors.onSurface }}>
               TOTAL RECORDS
             </Text>
-            <Text style={{
-              fontSize: 18, fontWeight: '700', color: Colors.primary,
-            }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.primary }}>
               {totalRecords.toLocaleString('en-IN')}
             </Text>
           </View>

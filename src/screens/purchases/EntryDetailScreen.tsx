@@ -16,6 +16,7 @@ import { RootStackParamList } from '../../types';
 import { Colors, Spacing } from '../../utils/theme';
 import { usePurchases, PurchaseEntryWithItems } from '../../hooks/usePurchases';
 import { usePayments } from '../../hooks/usePayments';
+import { Boat,CurrencyCircleDollar,EyeSlash,Eye ,Trash  } from 'phosphor-react-native';
 
 type RouteT = RouteProp<RootStackParamList, 'EntryDetail'>;
 type Nav    = NativeStackNavigationProp<RootStackParamList>;
@@ -223,9 +224,29 @@ export default function EntryDetailScreen() {
           }}>
             {entry.fishermanName}
           </Text>
-          <Text style={{ fontSize: 15, color: Colors.onSurfaceVariant, marginTop: 2 }}>
-            ⛵ {entry.fishermanBoat}
-          </Text>
+        <View
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  }}
+>
+  <Boat
+    size={15}
+    color={Colors.onSurfaceVariant}
+    weight="fill"
+  />
+
+  <Text
+    style={{
+      fontSize: 15,
+      color: Colors.onSurfaceVariant,
+    }}
+  >
+    {entry.fishermanBoat}
+  </Text>
+</View>
         </View>
 
         {/* ── Payment summary ── */}
@@ -257,32 +278,86 @@ export default function EntryDetailScreen() {
     gap: 2,
   }}
 >
-  <Text style={{ color: `${Colors.onPrimary}90`, fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
-    💰 PAYMENTS
+ <View
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  }}
+>
+  <CurrencyCircleDollar
+    size={14}
+    color={`${Colors.onPrimary}90`}
+    weight="fill"
+  />
+
+  <Text
+    style={{
+      color: `${Colors.onPrimary}90`,
+      fontSize: 10,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    }}
+  >
+    PAYMENTS
   </Text>
+</View>
   <Text style={{ color: Colors.onPrimary, fontSize: 14, fontWeight: '700' }}>
     {balance > 0
       ? `₹${balance.toLocaleString('en-IN')} due`
-      : '✓ Cleared'}
+      : 'Cleared'}
   </Text>
 </TouchableOpacity>
 
           {/* Show/hide prices */}
           <TouchableOpacity
-            onPress={() => setPricesVisible(!pricesVisible)}
-            style={{
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              backgroundColor: pricesVisible ? Colors.primaryFixed : Colors.surfaceContainerLow,
-              borderRadius: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 14, color: pricesVisible ? Colors.onPrimaryFixed : Colors.outline }}>
-              {pricesVisible ? '🙈 Hide' : '👁 Show'}
-            </Text>
-          </TouchableOpacity>
+  onPress={() => setPricesVisible(!pricesVisible)}
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: pricesVisible
+      ? Colors.primaryFixed
+      : Colors.surfaceContainer,
+    borderRadius: 8,
+  }}
+>
+  {pricesVisible ? (
+    <EyeSlash
+      size={16}
+      color={
+        pricesVisible
+          ? Colors.onPrimaryFixed
+          : Colors.outline
+      }
+      weight="bold"
+    />
+  ) : (
+    <Eye
+      size={16}
+      color={
+        pricesVisible
+          ? Colors.onPrimaryFixed
+          : Colors.outline
+      }
+      weight="bold"
+    />
+  )}
+
+  <Text
+    style={{
+      fontSize: 13,
+      fontWeight: '600',
+      color: pricesVisible
+        ? Colors.onPrimaryFixed
+        : Colors.outline,
+    }}
+  >
+    {pricesVisible ? 'Hide Prices' : 'Show Prices'}
+  </Text>
+</TouchableOpacity>
 
           {/* Delete */}
           <TouchableOpacity
@@ -298,7 +373,11 @@ export default function EntryDetailScreen() {
               borderColor: `${Colors.error}30`,
             }}
           >
-            <Text style={{ fontSize: 14, color: Colors.error }}>🗑</Text>
+           <Trash
+  size={14}
+  color={Colors.error}
+  weight="bold"
+/>
           </TouchableOpacity>
         </View>
 

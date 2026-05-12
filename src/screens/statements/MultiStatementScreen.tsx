@@ -8,6 +8,15 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
+
+import {
+  MagnifyingGlass,
+  X,
+  Printer,
+  PaperPlaneTilt,
+  Boat   
+} from "phosphor-react-native";
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { eq, sql, desc } from 'drizzle-orm';
@@ -473,7 +482,11 @@ export default function MultiStatementScreen() {
           gap: 8, borderWidth: 1,
           borderColor: search ? accentColor : Colors.outlineVariant,
         }}>
-          <Text style={{ fontSize: 16 }}>🔍</Text>
+          <MagnifyingGlass
+  size={18}
+  color={Colors.onSurfaceVariant}
+  weight="bold"
+/>
           <TextInput
             style={{ flex: 1, fontSize: 15, color: Colors.onSurface, padding: 0 }}
             placeholder={isFisherman ? "Search fishermen…" : isRegister ? "Search…" : "Search buyers…"}
@@ -483,7 +496,11 @@ export default function MultiStatementScreen() {
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')}>
-              <Text style={{ fontSize: 16, color: Colors.outline }}>✕</Text>
+              <X
+  size={18}
+  color={Colors.outline}
+  weight="bold"
+/>
             </TouchableOpacity>
           )}
         </View>
@@ -572,7 +589,7 @@ export default function MultiStatementScreen() {
                 </Text>
                 <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 1 }}>
                   {isBuyer ? entity.subLabel.charAt(0).toUpperCase() + entity.subLabel.slice(1)
-                           : `⛵ ${entity.subLabel}`}
+                           : `${entity.subLabel}`}
                   {' · '}
                   {entity.entryCount} {isBuyer ? 'order' : 'entr'}{entity.entryCount !== 1 ? (isBuyer ? 's' : 'ies') : 'y'}
                 </Text>
@@ -584,7 +601,7 @@ export default function MultiStatementScreen() {
                   ₹{entity.totalAmount.toLocaleString('en-IN')}
                 </Text>
                 <Text style={{ fontSize: 11, color: isCleared ? Colors.primary : Colors.error, fontWeight: '600' }}>
-                  {isCleared ? '✓ Cleared' : `₹${entity.balance.toLocaleString('en-IN')} due`}
+                  {isCleared ? 'Cleared' : `₹${entity.balance.toLocaleString('en-IN')} due`}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -629,7 +646,7 @@ export default function MultiStatementScreen() {
                 }}>
                   {selectedTotalBalance > 0
                     ? `₹${selectedTotalBalance.toLocaleString('en-IN')}`
-                    : '✓ Cleared'}
+                    : 'Cleared'}
                 </Text>
               </View>
             </View>
@@ -654,10 +671,35 @@ export default function MultiStatementScreen() {
               alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
             }}
           >
-            {generating
-              ? <><ActivityIndicator size="small" color={onAccent} /><Text style={{ color: onAccent, fontSize: 15, fontWeight: '700' }}>Generating PDF…</Text></>
-              : <><Text style={{ fontSize: 18 }}>📤</Text><Text style={{ color: onAccent, fontSize: 15, fontWeight: '700' }}>Share PDF — {selectedEntityIds.size} selected</Text></>
-            }
+            {
+  generating ? (
+    <>
+      <ActivityIndicator size="small" color={onAccent} />
+      <Text style={{
+        color: onAccent,
+        fontSize: 15,
+        fontWeight: '700'
+      }}>
+        Generating PDF…
+      </Text>
+    </>
+  ) : (
+    <>
+      <PaperPlaneTilt
+        size={18}
+        color={onAccent}
+        weight="fill"
+      />
+      <Text style={{
+        color: onAccent,
+        fontSize: 15,
+        fontWeight: '700'
+      }}>
+        Share PDF — {selectedEntityIds.size} selected
+      </Text>
+    </>
+  )
+}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -669,10 +711,35 @@ export default function MultiStatementScreen() {
               justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: Colors.outlineVariant,
             }}
           >
-            {printing
-              ? <><ActivityIndicator size="small" color={accentColor} /><Text style={{ color: Colors.onSurface, fontSize: 14, fontWeight: '600' }}>Opening Print…</Text></>
-              : <><Text style={{ fontSize: 16 }}>🖨️</Text><Text style={{ color: Colors.onSurface, fontSize: 14, fontWeight: '600' }}>Print</Text></>
-            }
+            {
+  printing ? (
+    <>
+      <ActivityIndicator size="small" color={accentColor} />
+      <Text style={{
+        color: Colors.onSurface,
+        fontSize: 14,
+        fontWeight: '600'
+      }}>
+        Opening Print…
+      </Text>
+    </>
+  ) : (
+    <>
+      <Printer
+        size={18}
+        color={Colors.onSurface}
+        weight="fill"
+      />
+      <Text style={{
+        color: Colors.onSurface,
+        fontSize: 14,
+        fontWeight: '600'
+      }}>
+        Print
+      </Text>
+    </>
+  )
+}
           </TouchableOpacity>
         </View>
       )}

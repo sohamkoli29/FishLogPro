@@ -19,16 +19,37 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { RootStackParamList } from '../../types';
 import { Colors, Spacing } from '../../utils/theme';
 import { useBuyers } from '../../hooks/useBuyers';
-
+import {
+  Factory,
+  Buildings,
+  User,
+} from 'phosphor-react-native';
 // ── Types ──────────────────────────────────────────────────────
 type BuyerType = 'supplier' | 'company' | 'other';
 type RouteT   = RouteProp<RootStackParamList, 'AddBuyer'>;
 
-const BUYER_TYPES: { key: BuyerType; label: string; icon: string; desc: string }[] = [
-  { key: 'supplier', label: 'Supplier', icon: '🏭', desc: 'Wholesale supplier or distributor' },
-  { key: 'company',  label: 'Company',  icon: '🏢', desc: 'Registered company or business'   },
-  { key: 'other',    label: 'Other',    icon: '👤', desc: 'Individual or other buyer type'    },
-];
+const BUYER_TYPES = [
+  {
+    key: 'supplier',
+    label: 'Supplier',
+    icon: Factory,
+    desc: 'Wholesale supplier or distributor',
+  },
+
+  {
+    key: 'company',
+    label: 'Company',
+    icon: Buildings,
+    desc: 'Registered company or business',
+  },
+
+  {
+    key: 'other',
+    label: 'Other',
+    icon: User,
+    desc: 'Individual or other buyer type',
+  },
+] as const;
 
 // ── Validation ──────────────────────────────────────────────────
 const schema = z.object({
@@ -181,9 +202,11 @@ export default function AddBuyerScreen() {
             </Text>
 
             <View style={{ gap: Spacing.sm }}>
-              {BUYER_TYPES.map((t) => {
-                const isSelected = buyerType === t.key;
-                return (
+             {BUYER_TYPES.map((t) => {
+  const isSelected = buyerType === t.key;
+  const IconComponent = t.icon;
+
+  return (
                   <TouchableOpacity
                     key={t.key}
                     onPress={() => setBuyerType(t.key)}
@@ -200,7 +223,15 @@ export default function AddBuyerScreen() {
                         : Colors.surfaceContainerLowest,
                     }}
                   >
-                    <Text style={{ fontSize: 24 }}>{t.icon}</Text>
+                    <IconComponent
+  size={24}
+  color={
+    isSelected
+      ? Colors.onPrimaryFixed
+      : Colors.onSurfaceVariant
+  }
+  weight="fill"
+/>
                     <View style={{ flex: 1 }}>
                       <Text style={{
                         fontSize: 15, fontWeight: '600',

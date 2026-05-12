@@ -27,6 +27,16 @@ import {
 } from '../../db/schema';
 import { usePayments, PaymentMode, PaymentInput } from '../../hooks/usePayments';
 
+import {
+  CurrencyCircleDollar,
+  CheckCircle,
+  CreditCard,
+  Bank,
+  DeviceMobile,
+  NotePencil,
+  Wallet,
+} from "phosphor-react-native";
+
 type RouteT = RouteProp<RootStackParamList, 'PaymentsScreen'>;
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -46,20 +56,48 @@ function formatDate(dateStr: string): string {
   return `${dd} ${months[parseInt(mm) - 1]} ${yyyy}`;
 }
 
-const MODES: { key: PaymentMode; label: string; icon: string }[] = [
-  { key: 'cash',   label: 'Cash',   icon: '💵' },
-  { key: 'bank',   label: 'Bank',   icon: '🏦' },
-  { key: 'upi',    label: 'UPI',    icon: '📱' },
-  { key: 'cheque', label: 'Cheque', icon: '📝' },
-  { key: 'other',  label: 'Other',  icon: '💳' },
+const MODES: {
+  key: PaymentMode;
+  label: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    key: 'cash',
+    label: 'Cash',
+    icon: <CurrencyCircleDollar size={18} color={Colors.onSurface} weight="fill" />,
+  },
+  {
+    key: 'bank',
+    label: 'Bank',
+    icon: <Bank size={18} color={Colors.onSurface} weight="fill" />,
+  },
+  {
+    key: 'upi',
+    label: 'UPI',
+    icon: <DeviceMobile size={18} color={Colors.onSurface} weight="fill" />,
+  },
+  {
+    key: 'cheque',
+    label: 'Cheque',
+    icon: <NotePencil size={18} color={Colors.onSurface} weight="fill" />,
+  },
+  {
+    key: 'other',
+    label: 'Other',
+    icon: <Wallet size={18} color={Colors.onSurface} weight="fill" />,
+  },
 ];
 
 function modeLabel(mode: string): string {
   return MODES.find((m) => m.key === mode)?.label ?? mode;
 }
 
-function modeIcon(mode: string): string {
-  return MODES.find((m) => m.key === mode)?.icon ?? '💳';
+function modeIcon(mode: string): React.ReactNode {
+  return (
+    MODES.find((m) => m.key === mode)?.icon ?? (
+      <Wallet size={18} color={Colors.onSurface} weight="fill" />
+    )
+  );
 }
 
 // ── Summary card ───────────────────────────────────────────────
@@ -312,7 +350,7 @@ function RecordPaymentModal({
                   backgroundColor: mode === m.key ? accentContainer : Colors.surface,
                 }}
               >
-                <Text style={{ fontSize: 14 }}>{m.icon}</Text>
+                {m.icon}
                 <Text style={{
                   fontSize: 13, fontWeight: '600',
                   color: mode === m.key ? onAccentContainer : Colors.onSurfaceVariant,
@@ -414,7 +452,7 @@ function PaymentRow({
         justifyContent: 'center', alignItems: 'center',
         flexShrink: 0,
       }}>
-        <Text style={{ fontSize: 20 }}>{modeIcon(payment.mode)}</Text>
+        {modeIcon(payment.mode)}
       </View>
 
       {/* Info */}
@@ -596,7 +634,11 @@ export default function PaymentsScreen() {
                   marginBottom: Spacing.lg,
                 }}
               >
-                <Text style={{ fontSize: 18 }}>💰</Text>
+                <CurrencyCircleDollar
+  size={18}
+  color={Colors.onPrimary}
+  weight="fill"
+/>
                 <Text style={{ color: Colors.onPrimary, fontSize: 15, fontWeight: '700' }}>
                   Record Payment — ₹{balance.toLocaleString('en-IN')} due
                 </Text>
@@ -615,7 +657,11 @@ export default function PaymentsScreen() {
                 gap: 8,
                 marginBottom: Spacing.lg,
               }}>
-                <Text style={{ fontSize: 18 }}>✅</Text>
+               <CheckCircle
+  size={18}
+  color={Colors.onPrimaryFixed}
+  weight="fill"
+/>
                 <Text style={{
                   color: Colors.onPrimaryFixed,
                   fontSize: 15, fontWeight: '700',
@@ -662,7 +708,12 @@ export default function PaymentsScreen() {
                   alignItems: 'center',
                   paddingVertical: Spacing.xl,
                 }}>
-                  <Text style={{ fontSize: 40, marginBottom: 12 }}>💳</Text>
+                  <CreditCard
+  size={40}
+  color={Colors.outline}
+  weight="fill"
+  style={{ marginBottom: 12 }}
+/>
                   <Text style={{
                     fontSize: 16, fontWeight: '600',
                     color: Colors.onSurface, marginBottom: 6,
@@ -726,7 +777,11 @@ export default function PaymentsScreen() {
               gap: 8,
             }}
           >
-            <Text style={{ fontSize: 16 }}>💰</Text>
+            <CurrencyCircleDollar
+  size={16}
+  color={Colors.onPrimary}
+  weight="fill"
+/>
             <Text style={{ color: Colors.onPrimary, fontSize: 16, fontWeight: '700' }}>
               Record Payment — ₹{balance.toLocaleString('en-IN')} due
             </Text>

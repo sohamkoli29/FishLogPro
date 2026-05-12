@@ -11,6 +11,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { desc, eq, sql } from 'drizzle-orm';
+import { ReactNode } from 'react';
+import { HandWavingIcon,
+        Fish,
+  Handshake,
+  Money,
+  Package,
+  HourglassLow,
+  Bank,
+  TrendUp,
+  Eye,
+  EyeSlash,
+  WaveSine,
+  Sailboat,
+  CurrencyInr,
+  HandshakeIcon,
+  } from "phosphor-react-native";
 
 import { RootStackParamList } from '../../types';
 import { Colors, Spacing } from '../../utils/theme';
@@ -25,6 +41,7 @@ import {
   salesItems,
 } from '../../db/schema';
 import { useAppStore } from '../../stores/appStore';
+
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -87,7 +104,7 @@ function StatCard({
 }: {
   label:   string;
   value:   string;
-  icon:    string;
+  icon:    ReactNode;
   color:   string;
   masked?: boolean;
 }) {
@@ -134,17 +151,31 @@ function ActivityRow({
   onPress,
   pricesVisible,
 }: {
-  item:          ActivityItem;
-  onPress:       () => void;
+  item: ActivityItem;
+  onPress: () => void;
   pricesVisible: boolean;
 }) {
-  const icon = item.type === 'purchase' ? '🐟'
-             : item.type === 'sale'     ? '🤝'
-             :                            '💰';
 
-  const iconBg = item.type === 'purchase' ? Colors.primaryFixed
-               : item.type === 'sale'     ? Colors.secondaryContainer
-               :                            Colors.tertiaryFixed;
+  const IconComponent =
+    item.type === 'purchase'
+      ? Fish
+      : item.type === 'sale'
+      ? Handshake
+      : CurrencyInr;
+
+  const iconColor =
+    item.type === 'purchase'
+      ? Colors.primary
+      : item.type === 'sale'
+      ? Colors.secondary
+      : Colors.tertiary;
+
+  const iconBg =
+    item.type === 'purchase'
+      ? Colors.primaryFixed
+      : item.type === 'sale'
+      ? Colors.secondaryContainer
+      : Colors.tertiaryFixed;
 
   return (
     <TouchableOpacity
@@ -160,23 +191,43 @@ function ActivityRow({
       }}
     >
       {/* Icon */}
-      <View style={{
-        width: 44, height: 44, borderRadius: 22,
-        backgroundColor: iconBg,
-        justifyContent: 'center', alignItems: 'center',
-        flexShrink: 0,
-      }}>
-        <Text style={{ fontSize: 18 }}>{icon}</Text>
+      <View
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          backgroundColor: iconBg,
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <IconComponent
+          size={20}
+          color={iconColor}
+          weight="fill"
+        />
       </View>
 
       {/* Info */}
       <View style={{ flex: 1 }}>
-        <Text style={{
-          fontSize: 14, fontWeight: '500', color: Colors.onSurface,
-        }} numberOfLines={1}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: '500',
+            color: Colors.onSurface,
+          }}
+          numberOfLines={1}
+        >
           {item.title}
         </Text>
-        <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant }}>
+
+        <Text
+          style={{
+            fontSize: 12,
+            color: Colors.onSurfaceVariant,
+          }}
+        >
           {item.sub}
         </Text>
       </View>
@@ -184,25 +235,42 @@ function ActivityRow({
       {/* Amount + status */}
       <View style={{ alignItems: 'flex-end', gap: 3 }}>
         {pricesVisible ? (
-          <Text style={{
-            fontSize: 14, fontWeight: '700', color: Colors.onSurface,
-          }}>
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: '700',
+              color: Colors.onSurface,
+            }}
+          >
             ₹{item.amount.toLocaleString('en-IN')}
           </Text>
         ) : (
-          <Text style={{ fontSize: 13, color: Colors.outline, letterSpacing: 3 }}>
+          <Text
+            style={{
+              fontSize: 13,
+              color: Colors.outline,
+              letterSpacing: 3,
+            }}
+          >
             ••••
           </Text>
         )}
-        <View style={{
-          paddingHorizontal: 8, paddingVertical: 2,
-          backgroundColor: `${item.statusColor}18`,
-          borderRadius: 99,
-        }}>
-          <Text style={{
-            fontSize: 10, fontWeight: '700',
-            color: item.statusColor,
-          }}>
+
+        <View
+          style={{
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            backgroundColor: `${item.statusColor}18`,
+            borderRadius: 99,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: '700',
+              color: item.statusColor,
+            }}
+          >
             {item.status}
           </Text>
         </View>
@@ -321,7 +389,7 @@ export default function HomeScreen() {
         id:          `purchase-${p.id}`,
         type:        'purchase' as const,
         title:       `Purchased from ${p.fishermanName}`,
-        sub:         `⛵ ${p.boatName} • ${timeAgo(p.createdAt)}`,
+        sub:         ` ${p.boatName} • ${timeAgo(p.createdAt)}`,
         amount:      p.totalAmount,
         status:      'Purchase',
         statusColor: Colors.primary,
@@ -418,8 +486,9 @@ export default function HomeScreen() {
               fontSize: 28, fontWeight: '700',
               color: Colors.onSurface, letterSpacing: -0.3, marginTop: 2,
             }}>
-              {greetingText()}, Skipper 👋
+              {greetingText()}, Skipper 
             </Text>
+            <HandWavingIcon size={32} />
             <Text style={{ fontSize: 14, color: Colors.onSurfaceVariant, marginTop: 4 }}>
               {new Date().toLocaleDateString('en-IN', {
                 weekday: 'long', day: 'numeric', month: 'long',
@@ -437,9 +506,19 @@ export default function HomeScreen() {
               marginTop: 4,
             }}
           >
-            <Text style={{ fontSize: 20 }}>
-              {pricesVisible ? '🙈' : '👁'}
-            </Text>
+            {pricesVisible ? (
+  <EyeSlash
+    size={20}
+    color={Colors.onSurface}
+    weight="bold"
+  />
+) : (
+  <Eye
+    size={20}
+    color={Colors.onSurface}
+    weight="bold"
+  />
+)}
           </TouchableOpacity>
         </View>
 
@@ -460,7 +539,11 @@ export default function HomeScreen() {
               gap: 6,
             }}
           >
-            <Text style={{ fontSize: 18 }}>🐟</Text>
+            <Fish
+  size={20}
+  color={Colors.onPrimary}
+  weight="fill"
+/>
             <Text style={{
               color: Colors.onPrimary, fontWeight: '700', fontSize: 14,
             }}>
@@ -481,7 +564,11 @@ export default function HomeScreen() {
               gap: 6,
             }}
           >
-            <Text style={{ fontSize: 18 }}>🤝</Text>
+            <HandshakeIcon
+  size={20}
+  color={Colors.onPrimary}
+  weight="fill"
+/>
             <Text style={{
               color: Colors.onSecondary, fontWeight: '700', fontSize: 14,
             }}>
@@ -506,27 +593,51 @@ export default function HomeScreen() {
               <StatCard
                 label="Today's Purchases"
                 value={`₹${(data?.todayPurchases ?? 0).toLocaleString('en-IN')}`}
-                icon="📦"
+                icon={
+    <Package
+      size={20}
+      color={Colors.primary}
+      weight="duotone"
+    />
+  }
                 color={Colors.primary}
                 masked={!pricesVisible}
               />
               <StatCard
                 label="Pending Bills"
                 value={String(data?.pendingBills ?? 0)}
-                icon="⏳"
+                icon={
+    <HourglassLow
+      size={20}
+      color={Colors.tertiary}
+      weight="duotone"
+    />
+  }
                 color={Colors.tertiary}
               />
               <StatCard
                 label="Total Outstanding"
                 value={`₹${(data?.totalOutstanding ?? 0).toLocaleString('en-IN')}`}
-                icon="🏦"
+                icon={
+    <Bank
+      size={20}
+      color={Colors.error}
+      weight="duotone"
+    />
+  }
                 color={Colors.error}
                 masked={!pricesVisible}
               />
               <StatCard
                 label="Today's Sales"
                 value={`₹${(data?.todaySales ?? 0).toLocaleString('en-IN')}`}
-                icon="📈"
+                icon={
+    <TrendUp
+      size={20}
+      color={Colors.secondary}
+      weight="duotone"
+    />
+  }
                 color={Colors.secondary}
                 masked={!pricesVisible}
               />
@@ -561,7 +672,12 @@ export default function HomeScreen() {
                 padding: Spacing.xxl,
                 alignItems: 'center',
               }}>
-                <Text style={{ fontSize: 36, marginBottom: 12 }}>🌊</Text>
+                <WaveSine
+  size={36}
+  color={Colors.primary}
+  weight="duotone"
+  style={{ marginBottom: 12 }}
+/>
                 <Text style={{
                   fontSize: 16, fontWeight: '600',
                   color: Colors.onSurface, marginBottom: 4,

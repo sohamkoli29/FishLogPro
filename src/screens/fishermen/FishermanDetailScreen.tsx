@@ -8,6 +8,14 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+
+import {
+  Trash,
+  FilePdf ,
+  ClipboardText,
+} from "phosphor-react-native";
+
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -157,9 +165,16 @@ function EntryCard({
           backgroundColor: `${Colors.error}0a`,
         }}
       >
-        <Text style={{ fontSize: 12, color: Colors.error, fontWeight: '500' }}>
-          🗑 Delete
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+  <Trash
+    size={12}
+    color={Colors.error}
+    weight="fill"
+  />
+  <Text style={{ fontSize: 12, color: Colors.error, fontWeight: '500' }}>
+    Delete
+  </Text>
+</View>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -305,7 +320,7 @@ export default function FishermanDetailScreen() {
               }}>
                 {summary.balance > 0
                   ? `₹${summary.balance.toLocaleString('en-IN')}`
-                  : '✓ Cleared'}
+                  : 'Cleared'}
               </Text>
             </View>
           </View>
@@ -359,7 +374,11 @@ export default function FishermanDetailScreen() {
     borderColor: Colors.outlineVariant,
   }}
 >
-  <Text style={{ fontSize: 14 }}>📄</Text>
+  <FilePdf 
+  size={14}
+  color={Colors.onSurface}
+  weight="regular"
+/>
   <Text style={{ color: Colors.onSurface, fontSize: 13, fontWeight: '600' }}>
     Bill
   </Text>
@@ -381,7 +400,12 @@ export default function FishermanDetailScreen() {
             padding: Spacing.xxl,
             alignItems: 'center',
           }}>
-            <Text style={{ fontSize: 40, marginBottom: 12 }}>📋</Text>
+            <ClipboardText
+  size={40}
+  color={Colors.primary}
+  weight="duotone"
+  style={{ marginBottom: 12 }}
+/>
             <Text style={{
               fontSize: 16, fontWeight: '600',
               color: Colors.onSurface, marginBottom: 6,

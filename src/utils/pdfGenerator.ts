@@ -184,7 +184,7 @@ function renderPage(
   const isPurchase = data.type === 'purchase';
 
   const party = overrideParty ?? (isPurchase
-    ? { label: 'Fisherman', name: (data as PurchaseBillData).fishermanName, sub: `⛵ ${(data as PurchaseBillData).boatName}`, phone: data.phone }
+    ? { label: 'Fisherman', name: (data as PurchaseBillData).fishermanName, sub: ` ${(data as PurchaseBillData).boatName}`, phone: data.phone }
     : { label: 'Buyer', name: (data as SalesBillData).buyerName, sub: (data as SalesBillData).buyerType.charAt(0).toUpperCase() + (data as SalesBillData).buyerType.slice(1), phone: data.phone });
 
   const partyHTML = `
@@ -389,11 +389,11 @@ function generateHTML(data: BillData): string {
     ];
     if (data.reportType !== 'sales') {
       coverStats.push({ label: 'Total purchases', value: fmt(totalPurchase) });
-      coverStats.push({ label: 'Purchase balance due', value: totalPurchaseBalance <= 0 ? '✓ Cleared' : fmt(totalPurchaseBalance) });
+      coverStats.push({ label: 'Purchase balance due', value: totalPurchaseBalance <= 0 ? 'Cleared' : fmt(totalPurchaseBalance) });
     }
     if (data.reportType !== 'purchase') {
       coverStats.push({ label: 'Total sales', value: fmt(totalSales) });
-      coverStats.push({ label: 'Sales outstanding', value: totalSalesBalance <= 0 ? '✓ Cleared' : fmt(totalSalesBalance) });
+      coverStats.push({ label: 'Sales outstanding', value: totalSalesBalance <= 0 ? 'Cleared' : fmt(totalSalesBalance) });
     }
     if (data.reportType === 'both') {
       coverStats.push({ label: 'Net profit', value: fmt(totalSales - totalPurchase) });

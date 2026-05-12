@@ -23,6 +23,15 @@ import {
 } from '../../db/schema';
 import { useSales, OrderStatus } from '../../hooks/useSales';
 
+import {  Package,
+  Trash,
+  FilePdf,
+  ClockCountdown,
+  ArrowsClockwise,
+  CheckCircle,
+  Check } from 'phosphor-react-native';
+
+
 type Nav    = NativeStackNavigationProp<RootStackParamList>;
 type RouteT = RouteProp<RootStackParamList, 'BuyerDetail'>;
 
@@ -46,10 +55,35 @@ function formatDate(dateStr: string): string {
   return `${dd} ${months[parseInt(mm) - 1]} ${yyyy}`;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  pending:  { label: 'Pending',  icon: '⏳', color: Colors.onPrimaryFixed,        bg: Colors.primaryFixed      },
-  partial:  { label: 'Partial',  icon: '🔄', color: Colors.onSecondaryContainer,  bg: Colors.secondaryContainer },
-  complete: { label: 'Complete', icon: '✅', color: Colors.onTertiaryFixedVariant, bg: Colors.tertiaryFixed     },
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    icon: any;
+    color: string;
+    bg: string;
+  }
+> = {
+  pending: {
+    label: 'Pending',
+    icon: ClockCountdown,
+    color: Colors.onPrimaryFixed,
+    bg: Colors.primaryFixed,
+  },
+
+  partial: {
+    label: 'Partial',
+    icon: ArrowsClockwise,
+    color: Colors.onSecondaryContainer,
+    bg: Colors.secondaryContainer,
+  },
+
+  complete: {
+    label: 'Complete',
+    icon: CheckCircle,
+    color: Colors.onTertiaryFixedVariant,
+    bg: Colors.tertiaryFixed,
+  },
 };
 
 // ── Order card ─────────────────────────────────────────────────
@@ -62,7 +96,8 @@ function OrderCard({
   onPress:  () => void;
   onDelete: () => void;
 }) {
-  const cfg       = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
+  const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
+const StatusIcon = cfg.icon;
   const isCleared = order.balance <= 0;
 
   const handleDelete = () => {
@@ -118,7 +153,11 @@ function OrderCard({
             alignItems: 'center',
             gap: 3,
           }}>
-            <Text style={{ fontSize: 10 }}>{cfg.icon}</Text>
+            <StatusIcon
+  size={12}
+  color={cfg.color}
+  weight="fill"
+/>
             <Text style={{ fontSize: 10, fontWeight: '700', color: cfg.color }}>
               {cfg.label.toUpperCase()}
             </Text>
@@ -136,9 +175,29 @@ function OrderCard({
             </Text>
           )}
           {isCleared && (
-            <Text style={{ fontSize: 12, color: Colors.primary, fontWeight: '600' }}>
-              ✓ Paid
-            </Text>
+           <View
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  }}
+>
+  <Check
+    size={12}
+    color={Colors.primary}
+    weight="bold"
+  />
+
+  <Text
+    style={{
+      fontSize: 12,
+      color: Colors.primary,
+      fontWeight: '600',
+    }}
+  >
+    Paid
+  </Text>
+</View>
           )}
         </View>
       </View>
@@ -175,9 +234,16 @@ function OrderCard({
           backgroundColor: `${Colors.error}0a`,
         }}
       >
-        <Text style={{ fontSize: 12, color: Colors.error, fontWeight: '500' }}>
-          🗑 Delete
-        </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+  <Trash
+  size={12}
+  color={Colors.error}
+  weight="fill"
+/>
+  <Text style={{ fontSize: 12, color: Colors.error, fontWeight: '500' }}>
+    Delete
+  </Text>
+</View>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -324,7 +390,7 @@ export default function BuyerDetailScreen() {
               }}>
                 {summary.balance > 0
                   ? `₹${summary.balance.toLocaleString('en-IN')}`
-                  : '✓ Cleared'}
+                  : 'Cleared'}
               </Text>
             </View>
           </View>
@@ -362,7 +428,11 @@ export default function BuyerDetailScreen() {
         borderColor: Colors.outlineVariant,
       }}
     >
-      <Text style={{ fontSize: 14 }}>📄</Text>
+     <FilePdf
+  size={14}
+  color={Colors.onSurface}
+  weight="regular"
+/>
       <Text style={{ color: Colors.onSurface, fontSize: 13, fontWeight: '600' }}>
         Invoice
       </Text>
@@ -404,7 +474,12 @@ export default function BuyerDetailScreen() {
             padding: Spacing.xxl,
             alignItems: 'center',
           }}>
-            <Text style={{ fontSize: 40, marginBottom: 12 }}>📦</Text>
+            <Package
+  size={40}
+  color={Colors.primary}
+  weight="fill"
+  style={{ marginBottom: 12 }}
+/>
             <Text style={{
               fontSize: 16, fontWeight: '600',
               color: Colors.onSurface, marginBottom: 6,

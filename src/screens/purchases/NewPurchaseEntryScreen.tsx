@@ -10,6 +10,24 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import {
+  MagnifyingGlass,
+  X,
+  PencilSimple,
+  Trash,
+  Boat,
+  Phone,
+  FileText,
+  Plus,
+  CheckCircle,
+  WarningCircle,
+  Eye,
+  EyeSlash,
+  Fish,
+  CalendarBlank,
+  BoatIcon,
+} from "phosphor-react-native";
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { eq } from 'drizzle-orm';
@@ -115,7 +133,11 @@ function FishermanSearchPicker({
         gap: 8,
         marginBottom: 4,
       }}>
-        <Text style={{ fontSize: 16 }}>🔍</Text>
+        <MagnifyingGlass
+  size={18}
+  color={Colors.onSurfaceVariant}
+  weight="bold"
+/>
         <TextInput
           style={{ flex: 1, fontSize: 15, color: Colors.onSurface, padding: 0 }}
           placeholder="Search fisherman by name or boat…"
@@ -129,7 +151,11 @@ function FishermanSearchPicker({
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => { setQuery(''); setShowDropdown(true); }}>
-            <Text style={{ fontSize: 15, color: Colors.outline }}>✕</Text>
+            <X
+  size={16}
+  color={Colors.outline}
+  weight="bold"
+/>
           </TouchableOpacity>
         )}
         {!showDropdown && (
@@ -150,7 +176,11 @@ function FishermanSearchPicker({
           marginBottom: Spacing.md,
           marginTop: 4,
         }}>
-          <Text style={{ fontSize: 18 }}>⛵</Text>
+          <BoatIcon
+  size={16}
+  color={Colors.outline}
+  weight="bold"
+/>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 14, fontWeight: '700', color: Colors.onPrimaryFixed }}>
               {selected.name}
@@ -239,7 +269,11 @@ function FishermanSearchPicker({
                         fontSize: 12,
                         color: isSelected ? Colors.onPrimaryFixedVariant : Colors.onSurfaceVariant,
                       }}>
-                        ⛵ {f.boatName}
+                        <Boat
+  size={16}
+  color={Colors.outline}
+  weight="bold"
+/> {f.boatName}
                       </Text>
                     </View>
                     {isSelected && (
@@ -315,7 +349,11 @@ function FishRow({
         </Text>
         {canRemove && (
           <TouchableOpacity onPress={() => onRemove(row.id)}>
-            <Text style={{ fontSize: 18, color: Colors.error }}>✕</Text>
+            <X
+  size={16}
+  color={Colors.outline}
+  weight="bold"
+/>
           </TouchableOpacity>
         )}
       </View>
@@ -565,9 +603,29 @@ export default function NewPurchaseEntryScreen() {
                 maxLength={10}
               />
             </View>
-            <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 4 }}>
-              📅 {formatDisplay(date)}
-            </Text>
+            <View
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  }}
+>
+  <CalendarBlank
+    size={14}
+    color={Colors.onSurfaceVariant}
+    weight="bold"
+  />
+
+  <Text
+    style={{
+      fontSize: 12,
+      color: Colors.onSurfaceVariant,
+    }}
+  >
+    {formatDisplay(date)}
+  </Text>
+</View>
           </View>
 
           {/* ── Fish items ── */}
@@ -579,19 +637,54 @@ export default function NewPurchaseEntryScreen() {
               <Text style={{ fontSize: 15, fontWeight: '700', color: Colors.onSurface }}>
                 Catch Inventory
               </Text>
-              <TouchableOpacity
-                onPress={() => setPricesVisible(!pricesVisible)}
-                style={{
-                  flexDirection: 'row', alignItems: 'center', gap: 4,
-                  paddingHorizontal: 12, paddingVertical: 6,
-                  backgroundColor: pricesVisible ? Colors.primaryFixed : Colors.surfaceContainer,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ fontSize: 13, color: pricesVisible ? Colors.onPrimaryFixed : Colors.outline }}>
-                  {pricesVisible ? '🙈 Hide' : '👁 Show'} Prices
-                </Text>
-              </TouchableOpacity>
+             <TouchableOpacity
+  onPress={() => setPricesVisible(!pricesVisible)}
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: pricesVisible
+      ? Colors.primaryFixed
+      : Colors.surfaceContainer,
+    borderRadius: 8,
+  }}
+>
+  {pricesVisible ? (
+    <EyeSlash
+      size={16}
+      color={
+        pricesVisible
+          ? Colors.onPrimaryFixed
+          : Colors.outline
+      }
+      weight="bold"
+    />
+  ) : (
+    <Eye
+      size={16}
+      color={
+        pricesVisible
+          ? Colors.onPrimaryFixed
+          : Colors.outline
+      }
+      weight="bold"
+    />
+  )}
+
+  <Text
+    style={{
+      fontSize: 13,
+      fontWeight: '600',
+      color: pricesVisible
+        ? Colors.onPrimaryFixed
+        : Colors.outline,
+    }}
+  >
+    {pricesVisible ? 'Hide Prices' : 'Show Prices'}
+  </Text>
+</TouchableOpacity>
             </View>
 
             {rows.map((row, index) => (
@@ -663,7 +756,11 @@ export default function NewPurchaseEntryScreen() {
                 </Text>
               )}
             </View>
-            <Text style={{ fontSize: 40 }}>🐟</Text>
+          <Fish
+  size={40}
+  color={Colors.onPrimary}
+  weight="fill"
+/>
           </View>
 
           {/* ── Save button ── */}

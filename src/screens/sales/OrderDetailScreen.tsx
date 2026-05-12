@@ -17,6 +17,8 @@ import { Colors, Spacing } from '../../utils/theme';
 import { useSales, SalesOrderWithItems, OrderStatus } from '../../hooks/useSales';
 import { usePayments } from '../../hooks/usePayments';
 
+import { ArrowsClockwise, ClockCountdown,CurrencyCircleDollar ,CheckCircle ,Trash  } from 'phosphor-react-native';
+
 type RouteT = RouteProp<RootStackParamList, 'OrderDetail'>;
 type Nav    = NativeStackNavigationProp<RootStackParamList>;
 
@@ -36,26 +38,35 @@ type StatusConfigEntry = {
   color: string;
 };
 
-const STATUS_CONFIG: { [K in OrderStatus]: StatusConfigEntry } = {
-  pending: {
+const STATUS_OPTIONS: {
+  key: OrderStatus;
+  label: string;
+  icon: any;
+  bg: string;
+  color: string;
+}[] = [
+  {
+    key: 'pending',
     label: 'Pending',
-    icon:  '⏳',
-    bg:    Colors.primaryFixed,
+    icon: ClockCountdown,
+    bg: Colors.primaryFixed,
     color: Colors.onPrimaryFixed,
   },
-  partial: {
+  {
+    key: 'partial',
     label: 'Partial',
-    icon:  '🔄',
-    bg:    Colors.secondaryContainer,
+    icon: ArrowsClockwise,
+    bg: Colors.secondaryContainer,
     color: Colors.onSecondaryContainer,
   },
-  complete: {
+  {
+    key: 'complete',
     label: 'Complete',
-    icon:  '✅',
-    bg:    Colors.tertiaryFixed,
+    icon: CheckCircle,
+    bg: Colors.tertiaryFixed,
     color: Colors.onTertiaryFixedVariant,
   },
-};
+];
 
 // ── Payment progress card ──────────────────────────────────────
 function PaymentProgress({
@@ -226,8 +237,9 @@ export default function OrderDetailScreen() {
   }
 
   const balance   = order.totalAmount - order.totalPaid;
-  const statusCfg = STATUS_CONFIG[order.status as OrderStatus] ?? STATUS_CONFIG.pending;
-
+  const statusCfg =
+  STATUS_OPTIONS.find((s) => s.key === order.status) ?? STATUS_OPTIONS[0];
+  const StatusIcon = statusCfg.icon;
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surface }} edges={['bottom']}>
       <ScrollView
@@ -287,7 +299,10 @@ export default function OrderDetailScreen() {
             alignItems: 'center',
             gap: 4,
           }}>
-            <Text style={{ fontSize: 12 }}>{statusCfg.icon}</Text>
+            <StatusIcon
+  size={14}
+  color={statusCfg.color}
+/>
             <Text style={{
               fontSize: 11, fontWeight: '700',
               color: statusCfg.color, letterSpacing: 0.5,
@@ -330,7 +345,11 @@ export default function OrderDetailScreen() {
               gap: 6,
             }}
           >
-            <Text style={{ fontSize: 16 }}>💰</Text>
+            <CurrencyCircleDollar
+  size={18}
+  color={Colors.onSecondary}
+  weight="fill"
+/>
             <Text style={{ color: Colors.onSecondary, fontSize: 14, fontWeight: '700' }}>
               {balance > 0
                 ? `Payments — ₹${balance.toLocaleString('en-IN')} due`
@@ -352,7 +371,11 @@ export default function OrderDetailScreen() {
               borderColor: `${Colors.error}30`,
             }}
           >
-            <Text style={{ fontSize: 14, color: Colors.error }}>🗑</Text>
+           <Trash
+  size={16}
+  color={Colors.error}
+  weight="fill"
+/>
           </TouchableOpacity>
         </View>
 
@@ -370,13 +393,13 @@ export default function OrderDetailScreen() {
             ORDER STATUS
           </Text>
           <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-            {(Object.keys(STATUS_CONFIG) as OrderStatus[]).map((s) => {
-              const cfg      = STATUS_CONFIG[s];
-              const isActive = order.status === s;
+            {STATUS_OPTIONS.map((cfg) => {
+  const isActive = order.status === cfg.key;
+  const IconComponent = cfg.icon;
               return (
                 <TouchableOpacity
-                  key={s}
-                  onPress={() => handleStatusChange(s)}
+                  key={cfg.key}
+                  onPress={() => handleStatusChange(cfg.key)}
                   style={{
                     flex: 1,
                     alignItems: 'center',
@@ -388,7 +411,10 @@ export default function OrderDetailScreen() {
                     gap: 2,
                   }}
                 >
-                  <Text style={{ fontSize: 16 }}>{cfg.icon}</Text>
+                  <IconComponent
+  size={18}
+  color={isActive ? cfg.color : Colors.outline}
+/>
                   <Text style={{
                     fontSize: 10, fontWeight: '700',
                     color: isActive ? cfg.color : Colors.outline,

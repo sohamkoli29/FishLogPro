@@ -3,6 +3,21 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   RefreshControl, Alert, ActivityIndicator, TextInput,
 } from 'react-native';
+
+import {
+  MagnifyingGlass,
+  X,
+  Phone,
+  PencilSimple,
+  Trash,
+  FileText,
+  Handshake ,
+  Factory,
+  Buildings,
+  User,
+} from "phosphor-react-native";
+
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,10 +37,28 @@ interface BuyerWithBalance extends Buyer {
   balance:    number;
 }
 
+
 const TYPE_CONFIG = {
-  supplier: { icon: '🏭', label: 'Supplier', bg: Colors.tertiaryFixed,      color: Colors.onTertiaryFixedVariant },
-  company:  { icon: '🏢', label: 'Company',  bg: Colors.secondaryContainer, color: Colors.onSecondaryContainer  },
-  other:    { icon: '👤', label: 'Other',    bg: Colors.surfaceVariant,     color: Colors.onSurfaceVariant      },
+  supplier: {
+    icon: Factory,
+    label: 'Supplier',
+    bg: Colors.tertiaryFixed,
+    color: Colors.onTertiaryFixedVariant,
+  },
+
+  company: {
+    icon: Buildings,
+    label: 'Company',
+    bg: Colors.secondaryContainer,
+    color: Colors.onSecondaryContainer,
+  },
+
+  other: {
+    icon: User,
+    label: 'Other',
+    bg: Colors.surfaceVariant,
+    color: Colors.onSurfaceVariant,
+  },
 };
 
 function SearchBar({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
@@ -35,13 +68,21 @@ function SearchBar({ value, onChange, placeholder }: { value: string; onChange: 
       borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: Spacing.md,
       gap: 8, borderWidth: 1, borderColor: value ? Colors.secondary : Colors.outlineVariant,
     }}>
-      <Text style={{ fontSize: 16 }}>🔍</Text>
+      <MagnifyingGlass
+  size={18}
+  color={Colors.onSurfaceVariant}
+  weight="bold"
+/>
       <TextInput
         style={{ flex: 1, fontSize: 15, color: Colors.onSurface, padding: 0 }}
         placeholder={placeholder} placeholderTextColor={Colors.outline}
         value={value} onChangeText={onChange} autoCapitalize="words" returnKeyType="search"
       />
-      {value.length > 0 && <TouchableOpacity onPress={() => onChange('')}><Text style={{ fontSize: 16, color: Colors.outline }}>✕</Text></TouchableOpacity>}
+      {value.length > 0 && <TouchableOpacity onPress={() => onChange('')}><X
+  size={18}
+  color={Colors.outline}
+  weight="bold"
+/></TouchableOpacity>}
     </View>
   );
 }
@@ -56,21 +97,47 @@ function BalanceBadge({ balance }: { balance: number }) {
 }
 
 function BuyerCard({ item, onPress, onEdit, onDelete }: { item: BuyerWithBalance; onPress: () => void; onEdit: () => void; onDelete: () => void }) {
-  const cfg = TYPE_CONFIG[item.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.other;
+   const cfg =
+    TYPE_CONFIG[item.type as keyof typeof TYPE_CONFIG] ??
+    TYPE_CONFIG.other;
+
+  const IconComponent = cfg.icon;
   const handleDelete = () => Alert.alert('Delete Buyer', `Remove ${item.name} and all their sales records? This cannot be undone.`,
     [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: onDelete }]);
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={{ backgroundColor: Colors.surfaceContainerLowest, borderRadius: 16, padding: Spacing.md, marginBottom: Spacing.sm, borderWidth: 1, borderColor: Colors.outlineVariant }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-        <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: cfg.bg, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: 22 }}>{cfg.icon}</Text>
+       <View
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 16,
+            backgroundColor: cfg.bg,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <IconComponent
+            size={24}
+            color={cfg.color}
+            weight="fill"
+          />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 16, fontWeight: '600', color: Colors.onSurface }}>{item.name}</Text>
           <View style={{ alignSelf: 'flex-start', backgroundColor: cfg.bg, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2, marginTop: 2, marginBottom: 2 }}>
             <Text style={{ fontSize: 10, fontWeight: '700', color: cfg.color }}>{cfg.label.toUpperCase()}</Text>
           </View>
-          {item.phone ? <Text style={{ fontSize: 12, color: Colors.outline }}>📞 {item.phone}</Text> : null}
+          {item.phone ? <Text style={{ fontSize: 12, color: Colors.outline }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+  <Phone
+    size={12}
+    color={Colors.outline}
+    weight="fill"
+  />
+  <Text style={{ fontSize: 12, color: Colors.outline }}>
+    {item.phone}
+  </Text>
+</View></Text> : null}
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
           <BalanceBadge balance={item.balance} />
@@ -80,10 +147,28 @@ function BuyerCard({ item, onPress, onEdit, onDelete }: { item: BuyerWithBalance
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm, marginTop: Spacing.sm, paddingTop: Spacing.sm, borderTopWidth: 1, borderTopColor: Colors.outlineVariant }}>
         <TouchableOpacity onPress={onEdit} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: Colors.outlineVariant, backgroundColor: Colors.surfaceContainer }}>
-          <Text style={{ fontSize: 13, color: Colors.onSurface, fontWeight: '500' }}>✏️  Edit</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+  <PencilSimple
+    size={14}
+    color={Colors.onSurface}
+    weight="fill"
+  />
+  <Text style={{ fontSize: 13, color: Colors.onSurface, fontWeight: '500' }}>
+    Edit
+  </Text>
+</View>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleDelete} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: `${Colors.error}30`, backgroundColor: `${Colors.error}0a` }}>
-          <Text style={{ fontSize: 13, color: Colors.error, fontWeight: '500' }}>🗑  Delete</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+  <Trash
+    size={14}
+    color={Colors.error}
+    weight="fill"
+  />
+  <Text style={{ fontSize: 13, color: Colors.error, fontWeight: '500' }}>
+    Delete
+  </Text>
+</View>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -179,7 +264,11 @@ export default function BuyersScreen() {
               gap: 10, borderWidth: 1, borderColor: Colors.outlineVariant,
             }}
           >
-            <Text style={{ fontSize: 20 }}>📄</Text>
+           <FileText
+  size={20}
+  color={Colors.onSurface}
+  weight="fill"
+/>
             <View>
               <Text style={{ color: Colors.onSurface, fontSize: 14, fontWeight: '600' }}>
                 Generate Invoices — All Buyers
@@ -205,7 +294,12 @@ export default function BuyersScreen() {
         {/* Empty state */}
         {!loading && list.length === 0 && (
           <View style={{ backgroundColor: Colors.surfaceContainerLow, borderRadius: 20, padding: Spacing.xxl, alignItems: 'center' }}>
-            <Text style={{ fontSize: 56, marginBottom: 16 }}>🤝</Text>
+            <Handshake
+  size={56}
+  color={Colors.primary}
+  weight="fill"
+  style={{ marginBottom: 16 }}
+/>
             <Text style={{ fontSize: 18, fontWeight: '600', color: Colors.onSurface, marginBottom: 6 }}>No Buyers Yet</Text>
             <Text style={{ fontSize: 14, color: Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>Tap the Add button to register your first buyer.</Text>
             <TouchableOpacity onPress={() => navigation.navigate('AddBuyer', {})} style={{ marginTop: Spacing.xl, backgroundColor: Colors.secondary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}>
@@ -217,7 +311,12 @@ export default function BuyersScreen() {
         {/* No search results */}
         {!loading && list.length > 0 && filtered.length === 0 && (
           <View style={{ backgroundColor: Colors.surfaceContainerLow, borderRadius: 16, padding: Spacing.xl, alignItems: 'center' }}>
-            <Text style={{ fontSize: 36, marginBottom: 12 }}>🔍</Text>
+            <MagnifyingGlass
+  size={36}
+  color={Colors.primary}
+  weight="duotone"
+  style={{ marginBottom: 12 }}
+/>
             <Text style={{ fontSize: 16, fontWeight: '600', color: Colors.onSurface, marginBottom: 6 }}>No Results</Text>
             <Text style={{ fontSize: 14, color: Colors.onSurfaceVariant, textAlign: 'center' }}>No buyer matches "{query}"</Text>
           </View>

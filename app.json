@@ -12,14 +12,30 @@
       "resizeMode": "contain",
       "backgroundColor": "#fbf9f4"
     },
-    "ios": { "supportsTablet": false, "bundleIdentifier": "com.fishlogpro.app" },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fishlogpro.app"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#fbf9f4"
       },
-      "package": "com.fishlogpro.app"
+      "package": "com.fishlogpro.app",
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
+      ]
     },
-    "plugins": ["expo-sqlite", "expo-file-system"]
+    "plugins": [
+      "expo-sqlite",
+      "expo-file-system"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4ff362a8-a1e6-44b3-91e3-8a576cfa26b3"
+      }
+    }
   }
 }

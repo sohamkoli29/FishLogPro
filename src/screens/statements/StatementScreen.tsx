@@ -34,7 +34,7 @@ import {
   BillItem,
   SingleBillPage,
 } from '../../utils/pdfGenerator';
-
+import { Boat, Printer, PaperPlaneTilt  } from 'phosphor-react-native';
 type RouteT = RouteProp<RootStackParamList, 'StatementScreen'>;
 
 type FilterMode = 'all' | 'single' | 'range';
@@ -211,7 +211,7 @@ function BillRow({
           fontSize: 11, fontWeight: '600',
           color: isCleared ? Colors.primary : Colors.error,
         }}>
-          {isCleared ? '✓ Cleared' : `₹${balance.toLocaleString('en-IN')} due`}
+          {isCleared ? 'Cleared' : `₹${balance.toLocaleString('en-IN')} due`}
         </Text>
       </View>
     </TouchableOpacity>
@@ -616,13 +616,26 @@ export default function StatementScreen() {
           }}>
             {name}
           </Text>
-          <Text style={{ fontSize: 14, color: Colors.onSurfaceVariant, marginTop: 2 }}>
-            {partyDetails.boatName
-              ? `⛵ ${partyDetails.boatName}`
-              : partyDetails.type
-                ? `${partyDetails.type.charAt(0).toUpperCase() + partyDetails.type.slice(1)}`
-                : ''}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 6 }}>
+  {partyDetails.boatName ? (
+    <>
+      <Boat size={14} color={Colors.onSurfaceVariant} weight="fill" />
+      <Text style={{
+        fontSize: 14,
+        color: Colors.onSurfaceVariant
+      }}>
+        {partyDetails.boatName}
+      </Text>
+    </>
+  ) : partyDetails.type ? (
+    <Text style={{
+      fontSize: 14,
+      color: Colors.onSurfaceVariant
+    }}>
+      {partyDetails.type.charAt(0).toUpperCase() + partyDetails.type.slice(1)}
+    </Text>
+  ) : null}
+</View>
         </View>
 
         {/* ── Date filter card ── */}
@@ -841,7 +854,7 @@ export default function StatementScreen() {
                     }}>
                       {selectedBalance > 0
                         ? `₹${selectedBalance.toLocaleString('en-IN')}`
-                        : '✓ Cleared'}
+                        : 'Cleared'}
                     </Text>
                   </View>
                 </View>
@@ -887,12 +900,17 @@ export default function StatementScreen() {
                 </Text>
               </>
             ) : (
-              <>
-                <Text style={{ fontSize: 18 }}>📤</Text>
-                <Text style={{ color: Colors.onPrimary, fontSize: 15, fontWeight: '700' }}>
-                  Share PDF Bill
-                </Text>
-              </>
+             <>
+  
+  <PaperPlaneTilt size={18} color={Colors.onPrimary} weight="fill" />
+<Text style={{
+  color: Colors.onPrimary,
+  fontSize: 15,
+  fontWeight: '700'
+}}>
+  Share PDF Bill
+</Text>
+</>
             )}
           </TouchableOpacity>
 
@@ -921,11 +939,19 @@ export default function StatementScreen() {
               </>
             ) : (
               <>
-                <Text style={{ fontSize: 16 }}>🖨️</Text>
-                <Text style={{ color: Colors.onSurface, fontSize: 14, fontWeight: '600' }}>
-                  Print Bill
-                </Text>
-              </>
+  <Printer
+    size={18}
+    color={Colors.onSurface}
+    weight="fill"
+  />
+  <Text style={{
+    color: Colors.onSurface,
+    fontSize: 14,
+    fontWeight: '600'
+  }}>
+    Print Bill
+  </Text>
+</>
             )}
           </TouchableOpacity>
         </View>

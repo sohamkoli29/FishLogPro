@@ -3,6 +3,18 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   RefreshControl, Alert, ActivityIndicator, TextInput,
 } from 'react-native';
+
+import {
+  MagnifyingGlass,
+  X,
+  Sailboat,
+  Phone,
+  PencilSimple,
+  Trash,
+  FileText,
+} from "phosphor-react-native";
+
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -29,7 +41,11 @@ function SearchBar({ value, onChange, placeholder }: { value: string; onChange: 
       borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: Spacing.md,
       gap: 8, borderWidth: 1, borderColor: value ? Colors.primary : Colors.outlineVariant,
     }}>
-      <Text style={{ fontSize: 16 }}>🔍</Text>
+      <MagnifyingGlass
+  size={18}
+  color={Colors.onSurfaceVariant}
+  weight="bold"
+/>
       <TextInput
         style={{ flex: 1, fontSize: 15, color: Colors.onSurface, padding: 0 }}
         placeholder={placeholder} placeholderTextColor={Colors.outline}
@@ -37,7 +53,11 @@ function SearchBar({ value, onChange, placeholder }: { value: string; onChange: 
       />
       {value.length > 0 && (
         <TouchableOpacity onPress={() => onChange('')}>
-          <Text style={{ fontSize: 16, color: Colors.outline }}>✕</Text>
+          <X
+  size={18}
+  color={Colors.outline}
+  weight="bold"
+/>
         </TouchableOpacity>
       )}
     </View>
@@ -105,11 +125,29 @@ function FishermanCard({
             {item.name}
           </Text>
           <Text style={{ fontSize: 13, color: Colors.onSurfaceVariant, marginTop: 1 }}>
-            ⛵ {item.boatName}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+  <Sailboat
+    size={13}
+    color={Colors.onSurfaceVariant}
+    weight="fill"
+  />
+  <Text style={{ fontSize: 13, color: Colors.onSurfaceVariant }}>
+    {item.boatName}
+  </Text>
+</View>
           </Text>
           {item.phone ? (
             <Text style={{ fontSize: 12, color: Colors.outline, marginTop: 1 }}>
-              📞 {item.phone}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+  <Phone
+    size={12}
+    color={Colors.outline}
+    weight="fill"
+  />
+  <Text style={{ fontSize: 12, color: Colors.outline }}>
+    {item.phone}
+  </Text>
+</View>
             </Text>
           ) : null}
         </View>
@@ -138,7 +176,16 @@ function FishermanCard({
             backgroundColor: Colors.surfaceContainer,
           }}
         >
-          <Text style={{ fontSize: 13, color: Colors.onSurface, fontWeight: '500' }}>✏️  Edit</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+  <PencilSimple
+    size={14}
+    color={Colors.onSurface}
+    weight="fill"
+  />
+  <Text style={{ fontSize: 13, color: Colors.onSurface, fontWeight: '500' }}>
+    Edit
+  </Text>
+</View>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={handleDelete}
@@ -148,7 +195,16 @@ function FishermanCard({
             backgroundColor: `${Colors.error}0a`,
           }}
         >
-          <Text style={{ fontSize: 13, color: Colors.error, fontWeight: '500' }}>🗑  Delete</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+  <Trash
+    size={14}
+    color={Colors.error}
+    weight="fill"
+  />
+  <Text style={{ fontSize: 13, color: Colors.error, fontWeight: '500' }}>
+    Delete
+  </Text>
+</View>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -321,7 +377,11 @@ export default function FishermenScreen() {
               gap: 10, borderWidth: 1, borderColor: Colors.outlineVariant,
             }}
           >
-            <Text style={{ fontSize: 20 }}>📄</Text>
+            <FileText
+  size={20}
+  color={Colors.onSurface}
+  weight="fill"
+/>
             <View>
               <Text style={{ color: Colors.onSurface, fontSize: 14, fontWeight: '600' }}>
                 Generate Bills — All Fishermen
@@ -360,7 +420,12 @@ export default function FishermenScreen() {
             backgroundColor: Colors.surfaceContainerLow,
             borderRadius: 20, padding: Spacing.xxl, alignItems: 'center',
           }}>
-            <Text style={{ fontSize: 56, marginBottom: 16 }}>⛵</Text>
+            <Sailboat
+  size={56}
+  color={Colors.primary}
+  weight="duotone"
+  style={{ marginBottom: 16 }}
+/>
             <Text style={{
               fontSize: 18, fontWeight: '600',
               color: Colors.onSurface, marginBottom: 6,
@@ -393,7 +458,12 @@ export default function FishermenScreen() {
             backgroundColor: Colors.surfaceContainerLow,
             borderRadius: 16, padding: Spacing.xl, alignItems: 'center',
           }}>
-            <Text style={{ fontSize: 36, marginBottom: 12 }}>🔍</Text>
+            <MagnifyingGlass
+  size={36}
+  color={Colors.primary}
+  weight="duotone"
+  style={{ marginBottom: 12 }}
+/>
             <Text style={{
               fontSize: 16, fontWeight: '600',
               color: Colors.onSurface, marginBottom: 6,

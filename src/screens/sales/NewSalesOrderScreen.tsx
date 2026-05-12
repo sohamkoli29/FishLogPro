@@ -10,6 +10,17 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+
+import {
+  MagnifyingGlass,
+  X,
+  ClockCountdown,
+  ArrowsClockwise,
+  CheckCircle,
+  Handshake,
+  CalendarBlank
+} from "phosphor-react-native";
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 
@@ -43,15 +54,33 @@ const UNITS = ['kg', 'lbs', 'pcs', 'crate'] as const;
 type Unit   = typeof UNITS[number];
 
 const STATUS_OPTIONS: {
-  key:   OrderStatus;
+  key: OrderStatus;
   label: string;
-  icon:  string;
-  bg:    string;
+  icon: any;
+  bg: string;
   color: string;
 }[] = [
-  { key: 'pending',  label: 'Pending',  icon: '⏳', bg: Colors.primaryFixed,     color: Colors.onPrimaryFixed     },
-  { key: 'partial',  label: 'Partial',  icon: '🔄', bg: Colors.secondaryContainer, color: Colors.onSecondaryContainer },
-  { key: 'complete', label: 'Complete', icon: '✅', bg: Colors.tertiaryFixed,     color: Colors.onTertiaryFixedVariant },
+  {
+    key: 'pending',
+    label: 'Pending',
+    icon: ClockCountdown,
+    bg: Colors.primaryFixed,
+    color: Colors.onPrimaryFixed,
+  },
+  {
+    key: 'partial',
+    label: 'Partial',
+    icon: ArrowsClockwise,
+    bg: Colors.secondaryContainer,
+    color: Colors.onSecondaryContainer,
+  },
+  {
+    key: 'complete',
+    label: 'Complete',
+    icon: CheckCircle,
+    bg: Colors.tertiaryFixed,
+    color: Colors.onTertiaryFixedVariant,
+  },
 ];
 
 // ── Empty row ──────────────────────────────────────────────────
@@ -127,7 +156,11 @@ function BuyerSearchPicker({
         gap: 8,
         marginBottom: 4,
       }}>
-        <Text style={{ fontSize: 16 }}>🔍</Text>
+        <MagnifyingGlass
+  size={18}
+  color={Colors.onSurfaceVariant}
+  weight="bold"
+/>
         <TextInput
           style={{ flex: 1, fontSize: 15, color: Colors.onSurface, padding: 0 }}
           placeholder="Search buyer by name or type…"
@@ -141,7 +174,11 @@ function BuyerSearchPicker({
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => { setQuery(''); setShowDropdown(true); }}>
-            <Text style={{ fontSize: 15, color: Colors.outline }}>✕</Text>
+            <X
+  size={16}
+  color={Colors.outline}
+  weight="bold"
+/>
           </TouchableOpacity>
         )}
         {!showDropdown && (
@@ -162,7 +199,11 @@ function BuyerSearchPicker({
           marginBottom: Spacing.md,
           marginTop: 4,
         }}>
-          <Text style={{ fontSize: 18 }}>🤝</Text>
+          <Handshake
+  size={18}
+  color={Colors.onSecondaryContainer}
+  weight="fill"
+/>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 14, fontWeight: '700', color: Colors.onSecondaryContainer }}>
               {selected.name}
@@ -330,7 +371,11 @@ function SalesRow({
         </Text>
         {canRemove && (
           <TouchableOpacity onPress={() => onRemove(row.id)}>
-            <Text style={{ fontSize: 18, color: Colors.error }}>✕</Text>
+            <X
+  size={16}
+  color={Colors.outline}
+  weight="bold"
+/>
           </TouchableOpacity>
         )}
       </View>
@@ -653,9 +698,29 @@ export default function NewSalesOrderScreen() {
                 maxLength={10}
               />
             </View>
-            <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 4 }}>
-              📅 {formatDisplay(date)}
-            </Text>
+            <View
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  }}
+>
+  <CalendarBlank
+    size={14}
+    color={Colors.onSurfaceVariant}
+    weight="regular"
+  />
+
+  <Text
+    style={{
+      fontSize: 12,
+      color: Colors.onSurfaceVariant,
+    }}
+  >
+    {formatDisplay(date)}
+  </Text>
+</View>
           </View>
 
           {/* ── Order status ── */}
@@ -673,30 +738,52 @@ export default function NewSalesOrderScreen() {
               Order Status
             </Text>
             <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-              {STATUS_OPTIONS.map((s) => (
-                <TouchableOpacity
-                  key={s.key}
-                  onPress={() => setStatus(s.key)}
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    borderWidth: 1.5,
-                    borderColor: status === s.key ? Colors.secondary : Colors.outlineVariant,
-                    backgroundColor: status === s.key ? s.bg : Colors.surfaceContainerLowest,
-                    gap: 4,
-                  }}
-                >
-                  <Text style={{ fontSize: 20 }}>{s.icon}</Text>
-                  <Text style={{
-                    fontSize: 11, fontWeight: '700',
-                    color: status === s.key ? s.color : Colors.outline,
-                  }}>
-                    {s.label.toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {STATUS_OPTIONS.map((s) => {
+  const Icon = s.icon;
+
+  return (
+    <TouchableOpacity
+      key={s.key}
+      onPress={() => setStatus(s.key)}
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: status === s.key
+          ? Colors.secondary
+          : Colors.outlineVariant,
+        backgroundColor: status === s.key
+          ? s.bg
+          : Colors.surfaceContainerLowest,
+        gap: 6,
+      }}
+    >
+      <Icon
+        size={22}
+        color={
+          status === s.key
+            ? s.color
+            : Colors.outline
+        }
+        weight={status === s.key ? "fill" : "regular"}
+      />
+
+      <Text
+        style={{
+          fontSize: 11,
+          fontWeight: '700',
+          color: status === s.key
+            ? s.color
+            : Colors.outline,
+        }}
+      >
+        {s.label.toUpperCase()}
+      </Text>
+    </TouchableOpacity>
+  );
+})}
             </View>
           </View>
 
@@ -768,7 +855,11 @@ export default function NewSalesOrderScreen() {
                 ₹{grandTotal.toLocaleString('en-IN')}
               </Text>
             </View>
-            <Text style={{ fontSize: 40 }}>🤝</Text>
+            <Handshake
+  size={40}
+  color={Colors.onSecondary}
+  weight="fill"
+/>
           </View>
 
           {/* ── Save ── */}

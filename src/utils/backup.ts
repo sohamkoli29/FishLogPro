@@ -1,4 +1,10 @@
-import * as FileSystem from 'expo-file-system';
+// ── Import legacy FileSystem API (SDK 54+ breaking change) ────
+import {
+  documentDirectory,
+  writeAsStringAsync,
+  readAsStringAsync,
+  EncodingType,
+} from 'expo-file-system/legacy';
 import * as Sharing    from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { sqliteDb } from '../db/client';
@@ -22,15 +28,15 @@ export interface BackupData {
 // ── Export ─────────────────────────────────────────────────────
 export async function exportBackup(): Promise<void> {
   // Read all tables
-  const fishermen      = sqliteDb.getAllSync('SELECT * FROM fishermen');
+  const fishermen       = sqliteDb.getAllSync('SELECT * FROM fishermen');
   const purchaseEntries = sqliteDb.getAllSync('SELECT * FROM purchase_entries');
-  const purchaseItems  = sqliteDb.getAllSync('SELECT * FROM purchase_items');
-  const buyers         = sqliteDb.getAllSync('SELECT * FROM buyers');
-  const salesOrders    = sqliteDb.getAllSync('SELECT * FROM sales_orders');
-  const salesItems     = sqliteDb.getAllSync('SELECT * FROM sales_items');
-  const payments       = sqliteDb.getAllSync('SELECT * FROM payments');
-  const fishNames      = sqliteDb.getAllSync('SELECT * FROM fish_names');
-  const appSettings    = sqliteDb.getAllSync('SELECT * FROM app_settings');
+  const purchaseItems   = sqliteDb.getAllSync('SELECT * FROM purchase_items');
+  const buyers          = sqliteDb.getAllSync('SELECT * FROM buyers');
+  const salesOrders     = sqliteDb.getAllSync('SELECT * FROM sales_orders');
+  const salesItems      = sqliteDb.getAllSync('SELECT * FROM sales_items');
+  const payments        = sqliteDb.getAllSync('SELECT * FROM payments');
+  const fishNames       = sqliteDb.getAllSync('SELECT * FROM fish_names');
+  const appSettings     = sqliteDb.getAllSync('SELECT * FROM app_settings');
 
   const backup: BackupData = {
     version:     1,
@@ -48,10 +54,10 @@ export async function exportBackup(): Promise<void> {
 
   const json     = JSON.stringify(backup, null, 2);
   const fileName = `fishlog-backup-${formatDateForFile(new Date())}.json`;
-  const filePath = `${FileSystem.documentDirectory}${fileName}`;
+  const filePath = `${documentDirectory}${fileName}`;
 
-  await FileSystem.writeAsStringAsync(filePath, json, {
-    encoding: FileSystem.EncodingType.UTF8,
+  await writeAsStringAsync(filePath, json, {
+    encoding: EncodingType.UTF8,
   });
 
   const canShare = await Sharing.isAvailableAsync();
@@ -72,9 +78,8 @@ export async function importBackup(): Promise<{
   message: string;
   counts?: Record<string, number>;
 }> {
-  // Pick JSON file
   const result = await DocumentPicker.getDocumentAsync({
-    type:      'application/json',
+    type:                'application/json',
     copyToCacheDirectory: true,
   });
 
@@ -84,9 +89,8 @@ export async function importBackup(): Promise<{
 
   const fileUri = result.assets[0].uri;
 
-  // Read file
-  const json = await FileSystem.readAsStringAsync(fileUri, {
-    encoding: FileSystem.EncodingType.UTF8,
+  const json = await readAsStringAsync(fileUri, {
+    encoding: EncodingType.UTF8,
   });
 
   let backup: BackupData;
@@ -96,7 +100,6 @@ export async function importBackup(): Promise<{
     return { success: false, message: 'Invalid backup file — could not parse JSON.' };
   }
 
-  // Validate structure
   if (!backup.version || !backup.exportedAt) {
     return { success: false, message: 'Invalid backup file — missing version or export date.' };
   }
@@ -108,12 +111,9 @@ export async function importBackup(): Promise<{
     };
   }
 
-  // ── Restore — wipe and re-insert ──
   try {
-    // Disable FK constraints during restore
     sqliteDb.execSync('PRAGMA foreign_keys = OFF;');
 
-    // Clear all tables
     sqliteDb.execSync(`
       DELETE FROM payments;
       DELETE FROM sales_items;
@@ -126,7 +126,6 @@ export async function importBackup(): Promise<{
       DELETE FROM app_settings;
     `);
 
-    // Re-insert fishermen
     for (const row of backup.fishermen ?? []) {
       sqliteDb.runSync(
         'INSERT INTO fishermen (id, name, boat_name, phone, created_at) VALUES (?, ?, ?, ?, ?)',
@@ -134,7 +133,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-insert purchase entries
     for (const row of backup.purchaseEntries ?? []) {
       sqliteDb.runSync(
         `INSERT INTO purchase_entries
@@ -145,7 +143,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-insert purchase items
     for (const row of backup.purchaseItems ?? []) {
       sqliteDb.runSync(
         `INSERT INTO purchase_items
@@ -156,7 +153,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-insert buyers
     for (const row of backup.buyers ?? []) {
       sqliteDb.runSync(
         'INSERT INTO buyers (id, name, type, phone, created_at) VALUES (?, ?, ?, ?, ?)',
@@ -164,7 +160,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-insert sales orders
     for (const row of backup.salesOrders ?? []) {
       sqliteDb.runSync(
         `INSERT INTO sales_orders
@@ -175,7 +170,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-insert sales items
     for (const row of backup.salesItems ?? []) {
       sqliteDb.runSync(
         `INSERT INTO sales_items
@@ -187,7 +181,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-insert payments
     for (const row of backup.payments ?? []) {
       sqliteDb.runSync(
         `INSERT INTO payments
@@ -198,7 +191,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-insert fish names
     for (const row of backup.fishNames ?? []) {
       sqliteDb.runSync(
         'INSERT OR IGNORE INTO fish_names (id, name) VALUES (?, ?)',
@@ -206,7 +198,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-insert app settings
     for (const row of backup.appSettings ?? []) {
       sqliteDb.runSync(
         `INSERT INTO app_settings (key, value)
@@ -216,7 +207,6 @@ export async function importBackup(): Promise<{
       );
     }
 
-    // Re-enable FK constraints
     sqliteDb.execSync('PRAGMA foreign_keys = ON;');
 
     return {
@@ -234,7 +224,6 @@ export async function importBackup(): Promise<{
       },
     };
   } catch (err) {
-    // Re-enable FK even on error
     sqliteDb.execSync('PRAGMA foreign_keys = ON;');
     throw err;
   }
@@ -250,7 +239,7 @@ function formatDateForFile(d: Date): string {
   return `${yyyy}${mm}${dd}-${hh}${min}`;
 }
 
-// ── Get backup stats (for display) ────────────────────────────
+// ── Get DB stats (for display) ─────────────────────────────────
 export function getDbStats(): Record<string, number> {
   const tables = [
     'fishermen', 'purchase_entries', 'purchase_items',
