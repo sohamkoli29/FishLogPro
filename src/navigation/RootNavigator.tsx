@@ -6,19 +6,19 @@ import { RootStackParamList } from '../types';
 import { Colors } from '../utils/theme';
 import TabNavigator from './TabNavigator';
 
-import NewPurchaseEntryScreen from '../screens/purchases/NewPurchaseEntryScreen';
-import EntryDetailScreen      from '../screens/purchases/EntryDetailScreen';
-import NewSalesOrderScreen    from '../screens/sales/NewSalesOrderScreen';
-import OrderDetailScreen      from '../screens/sales/OrderDetailScreen';
-import PaymentsScreen         from '../screens/payments/PaymentsScreen';
-import StatementScreen        from '../screens/statements/StatementScreen';
-import BackupRestoreScreen    from '../screens/backup/BackupRestoreScreen';
-import AddFishermanScreen     from '../screens/fishermen/AddFishermanScreen';
-import AddBuyerScreen         from '../screens/buyers/AddBuyerScreen';
-import SettingsScreen         from '../screens/settings/SettingsScreen';
-import FishermanDetailScreen from '../screens/fishermen/FishermanDetailScreen';
-import BuyerDetailScreen     from '../screens/buyers/BuyerDetailScreen';
-
+import NewPurchaseEntryScreen  from '../screens/purchases/NewPurchaseEntryScreen';
+import EntryDetailScreen       from '../screens/purchases/EntryDetailScreen';
+import NewSalesOrderScreen     from '../screens/sales/NewSalesOrderScreen';
+import OrderDetailScreen       from '../screens/sales/OrderDetailScreen';
+import PaymentsScreen          from '../screens/payments/PaymentsScreen';
+import StatementScreen         from '../screens/statements/StatementScreen';
+import MultiStatementScreen    from '../screens/statements/MultiStatementScreen';
+import BackupRestoreScreen     from '../screens/backup/BackupRestoreScreen';
+import AddFishermanScreen      from '../screens/fishermen/AddFishermanScreen';
+import AddBuyerScreen          from '../screens/buyers/AddBuyerScreen';
+import SettingsScreen          from '../screens/settings/SettingsScreen';
+import FishermanDetailScreen   from '../screens/fishermen/FishermanDetailScreen';
+import BuyerDetailScreen       from '../screens/buyers/BuyerDetailScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -76,6 +76,13 @@ export default function RootNavigator() {
           options={{ title: 'Transaction Statement' }}
         />
         <Stack.Screen
+          name="MultiStatementScreen"
+          component={MultiStatementScreen}
+          options={({ route }) => ({
+            title: route.params.title ?? 'Generate Bills',
+          })}
+        />
+        <Stack.Screen
           name="BackupRestore"
           component={BackupRestoreScreen}
           options={{ title: 'Backup & Restore' }}
@@ -100,15 +107,15 @@ export default function RootNavigator() {
           options={{ title: 'Settings' }}
         />
         <Stack.Screen
-  name="FishermanDetail"
-  component={FishermanDetailScreen}
-  options={({ route }) => ({ title: route.params.name })}
-/>
-<Stack.Screen
-  name="BuyerDetail"
-  component={BuyerDetailScreen}
-  options={({ route }) => ({ title: route.params.name })}
-/>
+          name="FishermanDetail"
+          component={FishermanDetailScreen}
+          options={({ route }) => ({ title: route.params.name })}
+        />
+        <Stack.Screen
+          name="BuyerDetail"
+          component={BuyerDetailScreen}
+          options={({ route }) => ({ title: route.params.name })}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

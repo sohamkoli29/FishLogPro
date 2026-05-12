@@ -1,86 +1,76 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-  Alert,
-  ActivityIndicator,
+  View, Text, ScrollView, TouchableOpacity,
+  RefreshControl, Alert, ActivityIndicator, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { eq, sql, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 
 import { RootStackParamList } from '../../types';
 import { Colors, Spacing } from '../../utils/theme';
 import { db } from '../../db/client';
-import {
-  fishermen,
-  purchaseEntries,
-  payments,
-  type Fisherman,
-} from '../../db/schema';
+import { fishermen, purchaseEntries, payments, type Fisherman } from '../../db/schema';
+import { useFishermen } from '../../hooks/useFishermen';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-// ── Types ──────────────────────────────────────────────────────
 interface FishermanWithBalance extends Fisherman {
   totalPurchases: number;
   totalPaid:      number;
   balance:        number;
 }
 
-// ── Balance badge ──────────────────────────────────────────────
+function SearchBar({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  return (
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surfaceContainerLow,
+      borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: Spacing.md,
+      gap: 8, borderWidth: 1, borderColor: value ? Colors.primary : Colors.outlineVariant,
+    }}>
+      <Text style={{ fontSize: 16 }}>🔍</Text>
+      <TextInput
+        style={{ flex: 1, fontSize: 15, color: Colors.onSurface, padding: 0 }}
+        placeholder={placeholder} placeholderTextColor={Colors.outline}
+        value={value} onChangeText={onChange} autoCapitalize="words" returnKeyType="search"
+      />
+      {value.length > 0 && (
+        <TouchableOpacity onPress={() => onChange('')}>
+          <Text style={{ fontSize: 16, color: Colors.outline }}>✕</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
 function BalanceBadge({ balance }: { balance: number }) {
   const isCleared = balance === 0;
   const isOwed    = balance > 0;
-
-  const bg    = isCleared ? Colors.primaryFixed
-              : isOwed    ? Colors.errorContainer
-              :             Colors.secondaryContainer;
-
-  const color = isCleared ? Colors.onPrimaryFixed
-              : isOwed    ? Colors.onErrorContainer
-              :             Colors.onSecondaryContainer;
-
-  const label = isCleared ? 'Cleared'
-              : isOwed    ? 'Owes'
-              :             'Advance';
-
+  const bg    = isCleared ? Colors.primaryFixed   : isOwed ? Colors.errorContainer   : Colors.secondaryContainer;
+  const color = isCleared ? Colors.onPrimaryFixed : isOwed ? Colors.onErrorContainer : Colors.onSecondaryContainer;
+  const label = isCleared ? 'Cleared'             : isOwed ? 'Owes'                  : 'Advance';
   return (
-    <View style={{
-      backgroundColor: bg,
-      borderRadius: 99,
-      paddingHorizontal: 10,
-      paddingVertical: 3,
-    }}>
+    <View style={{ backgroundColor: bg, borderRadius: 99, paddingHorizontal: 10, paddingVertical: 3 }}>
       <Text style={{ fontSize: 11, fontWeight: '700', color }}>{label}</Text>
     </View>
   );
 }
 
-// ── Fisherman card ─────────────────────────────────────────────
 function FishermanCard({
   item,
   onPress,
   onEdit,
   onDelete,
 }: {
-  item: FishermanWithBalance;
+  item:     FishermanWithBalance;
   onPress:  () => void;
   onEdit:   () => void;
   onDelete: () => void;
 }) {
-  const initials = item.name
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials = item.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
-  const handleDelete = () => {
+  const handleDelete = () =>
     Alert.alert(
       'Delete Fisherman',
       `Remove ${item.name} and all their records? This cannot be undone.`,
@@ -89,24 +79,18 @@ function FishermanCard({
         { text: 'Delete', style: 'destructive', onPress: onDelete },
       ]
     );
-  };
 
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
       style={{
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 16,
-        padding: Spacing.md,
-        marginBottom: Spacing.sm,
-        borderWidth: 1,
-        borderColor: Colors.outlineVariant,
+        backgroundColor: Colors.surfaceContainerLowest, borderRadius: 16,
+        padding: Spacing.md, marginBottom: Spacing.sm,
+        borderWidth: 1, borderColor: Colors.outlineVariant,
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-
-        {/* Avatar */}
         <View style={{
           width: 52, height: 52, borderRadius: 26,
           backgroundColor: Colors.primaryFixed,
@@ -116,8 +100,6 @@ function FishermanCard({
             {initials}
           </Text>
         </View>
-
-        {/* Info */}
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 16, fontWeight: '600', color: Colors.onSurface }}>
             {item.name}
@@ -131,14 +113,11 @@ function FishermanCard({
             </Text>
           ) : null}
         </View>
-
-        {/* Balance */}
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
           <BalanceBadge balance={item.balance} />
           {item.balance !== 0 && (
             <Text style={{
-              fontSize: 15,
-              fontWeight: '700',
+              fontSize: 15, fontWeight: '700',
               color: item.balance > 0 ? Colors.error : Colors.secondary,
             }}>
               ₹{Math.abs(item.balance).toLocaleString('en-IN')}
@@ -146,74 +125,55 @@ function FishermanCard({
           )}
         </View>
       </View>
-
-      {/* Action row */}
       <View style={{
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        gap: Spacing.sm,
-        marginTop: Spacing.sm,
-        paddingTop: Spacing.sm,
-        borderTopWidth: 1,
-        borderTopColor: Colors.outlineVariant,
+        flexDirection: 'row', justifyContent: 'flex-end',
+        gap: Spacing.sm, marginTop: Spacing.sm, paddingTop: Spacing.sm,
+        borderTopWidth: 1, borderTopColor: Colors.outlineVariant,
       }}>
         <TouchableOpacity
           onPress={onEdit}
           style={{
-            paddingHorizontal: 16, paddingVertical: 6,
-            borderRadius: 8, borderWidth: 1,
-            borderColor: Colors.outlineVariant,
+            paddingHorizontal: 16, paddingVertical: 6, borderRadius: 8,
+            borderWidth: 1, borderColor: Colors.outlineVariant,
             backgroundColor: Colors.surfaceContainer,
           }}
         >
-          <Text style={{ fontSize: 13, color: Colors.onSurface, fontWeight: '500' }}>
-            ✏️  Edit
-          </Text>
+          <Text style={{ fontSize: 13, color: Colors.onSurface, fontWeight: '500' }}>✏️  Edit</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           onPress={handleDelete}
           style={{
-            paddingHorizontal: 16, paddingVertical: 6,
-            borderRadius: 8, borderWidth: 1,
-            borderColor: `${Colors.error}30`,
+            paddingHorizontal: 16, paddingVertical: 6, borderRadius: 8,
+            borderWidth: 1, borderColor: `${Colors.error}30`,
             backgroundColor: `${Colors.error}0a`,
           }}
         >
-          <Text style={{ fontSize: 13, color: Colors.error, fontWeight: '500' }}>
-            🗑  Delete
-          </Text>
+          <Text style={{ fontSize: 13, color: Colors.error, fontWeight: '500' }}>🗑  Delete</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 }
 
-// ── Main screen ────────────────────────────────────────────────
 export default function FishermenScreen() {
-  const navigation = useNavigation<Nav>();
-
-  const [list, setList]       = React.useState<FishermanWithBalance[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const isMounted             = useRef(true);
+  const navigation                    = useNavigation<Nav>();
+  const { deleteFisherman }           = useFishermen();
+  const [list,    setList]            = React.useState<FishermanWithBalance[]>([]);
+  const [loading, setLoading]         = React.useState(false);
+  const [query,   setQuery]           = useState('');
+  const isMounted                     = useRef(true);
 
   React.useEffect(() => {
     isMounted.current = true;
     return () => { isMounted.current = false; };
   }, []);
 
-  // ── Fetch directly — no hook dependency issues ──
   const fetchAll = useCallback(async () => {
     try {
       setLoading(true);
-
-      const rows = await db
-        .select()
-        .from(fishermen)
-        .orderBy(desc(fishermen.createdAt));
-
+      const rows = await db.select().from(fishermen).orderBy(desc(fishermen.createdAt));
       const withBalances: FishermanWithBalance[] = await Promise.all(
-        rows.map(async (f) => {
+        rows.map(async f => {
           const [purchaseRes] = await db
             .select({ total: sql<number>`COALESCE(SUM(total_amount), 0)` })
             .from(purchaseEntries)
@@ -224,25 +184,15 @@ export default function FishermenScreen() {
             .from(payments)
             .innerJoin(purchaseEntries, eq(purchaseEntries.id, payments.referenceId))
             .where(
-              sql`${payments.referenceType} = 'purchase'
-                  AND ${purchaseEntries.fishermenId} = ${f.id}`
+              sql`${payments.referenceType} = 'purchase' AND ${purchaseEntries.fishermenId} = ${f.id}`
             );
 
           const totalPurchases = Number(purchaseRes?.total ?? 0);
           const totalPaid      = Number(paymentRes?.total  ?? 0);
-
-          return {
-            ...f,
-            totalPurchases,
-            totalPaid,
-            balance: totalPurchases - totalPaid,
-          };
+          return { ...f, totalPurchases, totalPaid, balance: totalPurchases - totalPaid };
         })
       );
-
-      if (isMounted.current) {
-        setList(withBalances);
-      }
+      if (isMounted.current) setList(withBalances);
     } catch (err) {
       console.error('[FishermenScreen] fetch error:', err);
     } finally {
@@ -250,31 +200,36 @@ export default function FishermenScreen() {
     }
   }, []);
 
-  // ── Refetch every time screen comes into focus ──
-  useFocusEffect(
-    useCallback(() => {
-      console.log('🎯 FishermenScreen focused — fetching...');
-      fetchAll();
-    }, [fetchAll])
-  );
+  useFocusEffect(useCallback(() => { fetchAll(); }, [fetchAll]));
 
-  // ── Delete ──
+  // ── Uses hook so payments are cleaned up too ──
   const handleDelete = useCallback(async (id: number) => {
     try {
-      await db.delete(fishermen).where(eq(fishermen.id, id));
+      await deleteFisherman(id);
       await fetchAll();
     } catch (err) {
       Alert.alert('Error', String(err));
     }
-  }, [fetchAll]);
+  }, [deleteFisherman, fetchAll]);
 
-  const totalBalance = list.reduce((sum, f) => sum + f.balance, 0);
+  const filtered         = query.trim()
+    ? list.filter(f =>
+        f.name.toLowerCase().includes(query.toLowerCase()) ||
+        f.boatName.toLowerCase().includes(query.toLowerCase()) ||
+        (f.phone ?? '').includes(query)
+      )
+    : list;
+
+  const totalBalance     = list.reduce((sum, f) => sum + f.balance, 0);
+  const outstandingIds   = list.filter(f => f.balance > 0).map(f => f.id);
+  const outstandingCount = outstandingIds.length;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surface }}>
       <ScrollView
         contentContainerStyle={{ padding: Spacing.gutter, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={loading}
@@ -284,12 +239,10 @@ export default function FishermenScreen() {
           />
         }
       >
-        {/* ── Header ── */}
+        {/* Header */}
         <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: Spacing.xl,
+          flexDirection: 'row', justifyContent: 'space-between',
+          alignItems: 'flex-start', marginBottom: Spacing.lg,
         }}>
           <View>
             <Text style={{
@@ -299,22 +252,15 @@ export default function FishermenScreen() {
               Fishermen
             </Text>
             <Text style={{ fontSize: 15, color: Colors.onSurfaceVariant, marginTop: 4 }}>
-              {list.length === 0
-                ? 'No fishermen registered yet'
-                : `${list.length} registered`}
+              {list.length === 0 ? 'No fishermen registered yet' : `${list.length} registered`}
             </Text>
           </View>
-
           <TouchableOpacity
             onPress={() => navigation.navigate('AddFisherman', {})}
             style={{
-              backgroundColor: Colors.primary,
-              borderRadius: 12,
-              paddingHorizontal: 16,
-              paddingVertical: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
+              backgroundColor: Colors.primary, borderRadius: 12,
+              paddingHorizontal: 16, paddingVertical: 10,
+              flexDirection: 'row', alignItems: 'center', gap: 6,
             }}
           >
             <Text style={{ color: Colors.onPrimary, fontSize: 20, lineHeight: 24 }}>+</Text>
@@ -322,16 +268,12 @@ export default function FishermenScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Summary card ── */}
+        {/* Summary card */}
         {list.length > 0 && (
           <View style={{
-            backgroundColor: Colors.primary,
-            borderRadius: 20,
-            padding: Spacing.lg,
-            marginBottom: Spacing.xl,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            backgroundColor: Colors.primary, borderRadius: 20,
+            padding: Spacing.lg, marginBottom: Spacing.md,
+            flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <View>
               <Text style={{
@@ -340,7 +282,10 @@ export default function FishermenScreen() {
               }}>
                 TOTAL OUTSTANDING
               </Text>
-              <Text style={{ fontSize: 28, fontWeight: '700', color: Colors.onPrimary, marginTop: 4 }}>
+              <Text style={{
+                fontSize: 28, fontWeight: '700',
+                color: Colors.onPrimary, marginTop: 4,
+              }}>
                 ₹{totalBalance.toLocaleString('en-IN')}
               </Text>
             </View>
@@ -351,30 +296,75 @@ export default function FishermenScreen() {
               }}>
                 FLEET SIZE
               </Text>
-              <Text style={{ fontSize: 28, fontWeight: '700', color: Colors.onPrimary, marginTop: 4 }}>
+              <Text style={{
+                fontSize: 28, fontWeight: '700',
+                color: Colors.onPrimary, marginTop: 4,
+              }}>
                 {list.length}
               </Text>
             </View>
           </View>
         )}
 
-        {/* ── Loading ── */}
+        {/* Generate Bills button */}
+        {list.length > 0 && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('MultiStatementScreen', {
+              type:           'fisherman',
+              title:          'Purchase Bills',
+              preSelectedIds: outstandingIds,
+            })}
+            style={{
+              backgroundColor: Colors.surfaceContainerLow, borderRadius: 14,
+              paddingVertical: 13, marginBottom: Spacing.lg,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+              gap: 10, borderWidth: 1, borderColor: Colors.outlineVariant,
+            }}
+          >
+            <Text style={{ fontSize: 20 }}>📄</Text>
+            <View>
+              <Text style={{ color: Colors.onSurface, fontSize: 14, fontWeight: '600' }}>
+                Generate Bills — All Fishermen
+              </Text>
+              <Text style={{
+                fontSize: 12, marginTop: 1,
+                color: outstandingCount > 0 ? Colors.error : Colors.primary,
+              }}>
+                {outstandingCount > 0
+                  ? `${outstandingCount} with outstanding balance pre-selected`
+                  : 'All balances cleared ✓'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Search */}
+        {list.length > 0 && (
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search by name, boat or phone…"
+          />
+        )}
+
+        {/* Loading */}
         {loading && list.length === 0 && (
           <View style={{ alignItems: 'center', paddingTop: 60 }}>
             <ActivityIndicator size="large" color={Colors.primary} />
           </View>
         )}
 
-        {/* ── Empty state ── */}
+        {/* Empty state */}
         {!loading && list.length === 0 && (
           <View style={{
             backgroundColor: Colors.surfaceContainerLow,
-            borderRadius: 20,
-            padding: Spacing.xxl,
-            alignItems: 'center',
+            borderRadius: 20, padding: Spacing.xxl, alignItems: 'center',
           }}>
             <Text style={{ fontSize: 56, marginBottom: 16 }}>⛵</Text>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: Colors.onSurface, marginBottom: 6 }}>
+            <Text style={{
+              fontSize: 18, fontWeight: '600',
+              color: Colors.onSurface, marginBottom: 6,
+            }}>
               No Fishermen Yet
             </Text>
             <Text style={{
@@ -386,11 +376,8 @@ export default function FishermenScreen() {
             <TouchableOpacity
               onPress={() => navigation.navigate('AddFisherman', {})}
               style={{
-                marginTop: Spacing.xl,
-                backgroundColor: Colors.primary,
-                borderRadius: 12,
-                paddingHorizontal: 24,
-                paddingVertical: 12,
+                marginTop: Spacing.xl, backgroundColor: Colors.primary,
+                borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
               }}
             >
               <Text style={{ color: Colors.onPrimary, fontSize: 15, fontWeight: '600' }}>
@@ -400,19 +387,42 @@ export default function FishermenScreen() {
           </View>
         )}
 
-        {/* ── List ── */}
-        {list.map((item) => (
+        {/* No search results */}
+        {!loading && list.length > 0 && filtered.length === 0 && (
+          <View style={{
+            backgroundColor: Colors.surfaceContainerLow,
+            borderRadius: 16, padding: Spacing.xl, alignItems: 'center',
+          }}>
+            <Text style={{ fontSize: 36, marginBottom: 12 }}>🔍</Text>
+            <Text style={{
+              fontSize: 16, fontWeight: '600',
+              color: Colors.onSurface, marginBottom: 6,
+            }}>
+              No Results
+            </Text>
+            <Text style={{
+              fontSize: 14, color: Colors.onSurfaceVariant, textAlign: 'center',
+            }}>
+              No fisherman matches "{query}"
+            </Text>
+          </View>
+        )}
+
+        {/* List */}
+        {filtered.map(item => (
           <FishermanCard
             key={item.id}
             item={item}
-            onPress={() => navigation.navigate('FishermanDetail', { fishermenId: item.id, name: item.name })}
+            onPress={() => navigation.navigate('FishermanDetail', {
+              fishermenId: item.id, name: item.name,
+            })}
             onEdit={() => navigation.navigate('AddFisherman', { fishermenId: item.id })}
             onDelete={() => handleDelete(item.id)}
           />
         ))}
       </ScrollView>
 
-      {/* ── FAB ── */}
+      {/* FAB */}
       <TouchableOpacity
         onPress={() => navigation.navigate('AddFisherman', {})}
         style={{
@@ -420,8 +430,7 @@ export default function FishermenScreen() {
           width: 56, height: 56, borderRadius: 16,
           backgroundColor: Colors.primary,
           justifyContent: 'center', alignItems: 'center',
-          elevation: 8,
-          shadowColor: Colors.primary,
+          elevation: 8, shadowColor: Colors.primary,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.35, shadowRadius: 10,
         }}

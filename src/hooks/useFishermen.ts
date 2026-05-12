@@ -4,6 +4,7 @@ import { db } from '../db/client';
 import {
   fishermen,
   purchaseEntries,
+  purchaseItems,
   payments,
   type Fisherman,
   type NewFisherman,
@@ -79,34 +80,53 @@ export function useFishermen() {
   }, [fetchFishermen]);
 
   // ── Add ──
-const addFisherman = useCallback(
-  async (data: Omit<NewFisherman, 'id' | 'createdAt'>) => {
-    await db.insert(fishermen).values({
-      ...data,
-      createdAt: new Date().toISOString(),
-    });
-    // Don't call fetchFishermen here — the list screen
-    // will refetch via useFocusEffect when we goBack()
-  },
-  []
-);
+  const addFisherman = useCallback(
+    async (data: Omit<NewFisherman, 'id' | 'createdAt'>) => {
+      await db.insert(fishermen).values({
+        ...data,
+        createdAt: new Date().toISOString(),
+      });
+      // Don't call fetchFishermen here — the list screen
+      // will refetch via useFocusEffect when we goBack()
+    },
+    []
+  );
 
-// ── Update ──
-const updateFisherman = useCallback(
-  async (id: number, data: Partial<Omit<NewFisherman, 'id' | 'createdAt'>>) => {
-    await db.update(fishermen).set(data).where(eq(fishermen.id, id));
-  },
-  []
-);
+  // ── Update ──
+  const updateFisherman = useCallback(
+    async (id: number, data: Partial<Omit<NewFisherman, 'id' | 'createdAt'>>) => {
+      await db.update(fishermen).set(data).where(eq(fishermen.id, id));
+    },
+    []
+  );
 
-// ── Delete ──
-const deleteFisherman = useCallback(
-  async (id: number) => {
-    await db.delete(fishermen).where(eq(fishermen.id, id));
-    await fetchFishermen(); // Keep this — delete stays on same screen
-  },
-  [fetchFishermen]
-);
+  // ── Delete ──
+  const deleteFisherman = useCallback(
+    async (id: number) => {
+      // Step 1: get all purchase entry IDs for this fisherman
+      const entries = await db
+        .select({ id: purchaseEntries.id })
+        .from(purchaseEntries)
+        .where(eq(purchaseEntries.fishermenId, id));
+
+      // Step 2: delete payments linked to each purchase entry
+      for (const entry of entries) {
+        await db
+          .delete(payments)
+          .where(
+            sql`${payments.referenceType} = 'purchase'
+                AND ${payments.referenceId} = ${entry.id}`
+          );
+      }
+
+      // Step 3: delete fisherman (cascades purchase_entries + purchase_items)
+      await db.delete(fishermen).where(eq(fishermen.id, id));
+
+      // Step 4: refresh list
+      await fetchFishermen();
+    },
+    [fetchFishermen]
+  );
 
   // ── Get single ──
   const getFisherman = useCallback(async (id: number): Promise<Fisherman | null> => {

@@ -81,18 +81,25 @@ export type RootStackParamList = {
   OrderDetail:           { orderId: number };
   PaymentsScreen:        { referenceType: 'purchase' | 'sale'; referenceId: number; name: string };
   StatementScreen:       { type: 'fisherman' | 'buyer'; id: number; name: string };
+  MultiStatementScreen:  {
+    type:              'fisherman' | 'buyer' | 'both';
+    title?:            string;
+    reportType?:       'purchase' | 'sales' | 'both';
+    ids?:              number[];          // restrict which entities are shown (optional)
+    preSelectedIds?:   number[];          // which entities start pre-checked (optional, defaults to all shown)
+  };
   BackupRestore:         undefined;
   Settings:              undefined;
   AddFisherman:          { fishermenId?: number };
   AddBuyer:              { buyerId?: number };
-  FishermanDetail:       { fishermenId: number; name: string };   // ← new
-  BuyerDetail:           { buyerId: number; name: string };        // ← new
+  FishermanDetail:       { fishermenId: number; name: string };
+  BuyerDetail:           { buyerId: number; name: string };
 };
 
 export type TabParamList = {
-  Home: undefined;
-  Fishermen: undefined;
-  Buyers: undefined;
-  Register: undefined;
+  Home:        undefined;
+  Fishermen:   undefined;
+  Buyers:      undefined;
+  Register:    undefined;
   SettingsTab: undefined;
 };

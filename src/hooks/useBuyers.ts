@@ -48,6 +48,23 @@ export function useBuyers() {
 
   // ── Delete ──
   const deleteBuyer = useCallback(async (id: number) => {
+    // Step 1: get all sales order IDs for this buyer
+    const orders = await db
+      .select({ id: salesOrders.id })
+      .from(salesOrders)
+      .where(eq(salesOrders.buyerId, id));
+
+    // Step 2: delete payments linked to each sales order
+    for (const order of orders) {
+      await db
+        .delete(payments)
+        .where(
+          sql`${payments.referenceType} = 'sale'
+              AND ${payments.referenceId} = ${order.id}`
+        );
+    }
+
+    // Step 3: delete buyer (cascades sales_orders + sales_items)
     await db.delete(buyers).where(eq(buyers.id, id));
   }, []);
 

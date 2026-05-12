@@ -20,6 +20,7 @@ import { db } from '../../db/client';
 import { buyers, fishNames } from '../../db/schema';
 
 type RouteT = RouteProp<RootStackParamList, 'NewSalesOrder'>;
+type BuyerType = { id: number; name: string; type: string };
 
 // ── Helpers ────────────────────────────────────────────────────
 function todayString(): string {
@@ -65,6 +66,207 @@ function emptyRow(): SalesItemInput & { id: string } {
 }
 
 type Row = SalesItemInput & { id: string };
+
+// ── Buyer Search Picker ────────────────────────────────────────
+function BuyerSearchPicker({
+  buyerList,
+  selectedId,
+  onSelect,
+}: {
+  buyerList: BuyerType[];
+  selectedId: number | null;
+  onSelect: (id: number) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const selected = buyerList.find(b => b.id === selectedId);
+
+  const filtered = query.trim().length > 0
+    ? buyerList.filter(b =>
+        b.name.toLowerCase().includes(query.toLowerCase()) ||
+        b.type.toLowerCase().includes(query.toLowerCase())
+      )
+    : buyerList;
+
+  const handleSelect = (b: BuyerType) => {
+    onSelect(b.id);
+    setQuery(b.name);
+    setShowDropdown(false);
+  };
+
+  const handleFocus = () => {
+    setQuery('');
+    setShowDropdown(true);
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      setShowDropdown(false);
+      if (selected) setQuery(selected.name);
+      else setQuery('');
+    }, 180);
+  };
+
+  const inputBorderColor = selectedId
+    ? Colors.secondary
+    : showDropdown ? Colors.secondary : Colors.outlineVariant;
+
+  return (
+    <View style={{ position: 'relative', zIndex: 100 }}>
+      {/* Search input */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderRadius: 10,
+        borderWidth: 1.5,
+        borderColor: inputBorderColor,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 12,
+        gap: 8,
+        marginBottom: 4,
+      }}>
+        <Text style={{ fontSize: 16 }}>🔍</Text>
+        <TextInput
+          style={{ flex: 1, fontSize: 15, color: Colors.onSurface, padding: 0 }}
+          placeholder="Search buyer by name or type…"
+          placeholderTextColor={Colors.outline}
+          value={query}
+          onChangeText={(text) => { setQuery(text); setShowDropdown(true); }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          autoCapitalize="words"
+          returnKeyType="search"
+        />
+        {query.length > 0 && (
+          <TouchableOpacity onPress={() => { setQuery(''); setShowDropdown(true); }}>
+            <Text style={{ fontSize: 15, color: Colors.outline }}>✕</Text>
+          </TouchableOpacity>
+        )}
+        {!showDropdown && (
+          <Text style={{ fontSize: 13, color: Colors.outline }}>{showDropdown ? '▲' : '▼'}</Text>
+        )}
+      </View>
+
+      {/* Selected badge — shown when not in dropdown mode */}
+      {selectedId && !showDropdown && selected && (
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          backgroundColor: Colors.secondaryContainer,
+          borderRadius: 10,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          marginBottom: Spacing.md,
+          marginTop: 4,
+        }}>
+          <Text style={{ fontSize: 18 }}>🤝</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: Colors.onSecondaryContainer }}>
+              {selected.name}
+            </Text>
+            <Text style={{ fontSize: 12, color: Colors.onSecondaryContainer }}>
+              {selected.type.charAt(0).toUpperCase() + selected.type.slice(1)}
+            </Text>
+          </View>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: Colors.secondary }}>✓ Selected</Text>
+        </View>
+      )}
+
+      {/* Spacer when no selection and no dropdown */}
+      {!selectedId && !showDropdown && (
+        <View style={{ marginBottom: Spacing.md }} />
+      )}
+
+      {/* Dropdown results */}
+      {showDropdown && (
+        <View style={{
+          backgroundColor: Colors.surfaceContainerLowest,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: Colors.outlineVariant,
+          marginBottom: Spacing.md,
+          marginTop: 2,
+          overflow: 'hidden',
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.12,
+          shadowRadius: 6,
+          maxHeight: 240,
+        }}>
+          {buyerList.length === 0 ? (
+            <View style={{ padding: Spacing.md }}>
+              <Text style={{ fontSize: 14, color: Colors.outline }}>
+                No buyers found. Add one first.
+              </Text>
+            </View>
+          ) : filtered.length === 0 ? (
+            <View style={{ padding: Spacing.md }}>
+              <Text style={{ fontSize: 14, color: Colors.outline }}>
+                No match for "{query}"
+              </Text>
+            </View>
+          ) : (
+            <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
+              {filtered.map((b, idx) => {
+                const isSelected = selectedId === b.id;
+                return (
+                  <TouchableOpacity
+                    key={b.id}
+                    onPress={() => handleSelect(b)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: Spacing.md,
+                      borderBottomWidth: idx < filtered.length - 1 ? 1 : 0,
+                      borderBottomColor: Colors.outlineVariant,
+                      backgroundColor: isSelected ? Colors.secondaryContainer : Colors.surfaceContainerLowest,
+                    }}
+                  >
+                    {/* Avatar initials */}
+                    <View style={{
+                      width: 38, height: 38, borderRadius: 19,
+                      backgroundColor: isSelected ? Colors.secondary : Colors.surfaceContainerHigh,
+                      justifyContent: 'center', alignItems: 'center', flexShrink: 0,
+                    }}>
+                      <Text style={{
+                        fontSize: 13, fontWeight: '700',
+                        color: isSelected ? Colors.onSecondary : Colors.onSurfaceVariant,
+                      }}>
+                        {b.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{
+                        fontSize: 15, fontWeight: '600',
+                        color: isSelected ? Colors.onSecondaryContainer : Colors.onSurface,
+                      }}>
+                        {b.name}
+                      </Text>
+                      <Text style={{
+                        fontSize: 12,
+                        color: isSelected ? Colors.onSecondaryContainer : Colors.onSurfaceVariant,
+                      }}>
+                        {b.type.charAt(0).toUpperCase() + b.type.slice(1)}
+                      </Text>
+                    </View>
+                    {isSelected && (
+                      <Text style={{ fontSize: 16, color: Colors.secondary }}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
 
 // ── Sales item row ─────────────────────────────────────────────
 function SalesRow({
@@ -300,17 +502,16 @@ export default function NewSalesOrderScreen() {
   const route         = useRoute<RouteT>();
   const { createOrder } = useSales();
 
-  const [buyerList, setBuyerList] = useState<{ id: number; name: string; type: string }[]>([]);
+  const [buyerList, setBuyerList] = useState<BuyerType[]>([]);
   const [fishSuggestions, setFishSuggestions] = useState<string[]>([]);
 
   const [selectedBuyerId, setSelectedBuyerId] = useState<number | null>(
     route.params?.buyerId ?? null
   );
-  const [date,            setDate]            = useState(todayString());
-  const [status,          setStatus]          = useState<OrderStatus>('pending');
-  const [rows,            setRows]            = useState<Row[]>([emptyRow()]);
-  const [saving,          setSaving]          = useState(false);
-  const [showBuyerPicker, setShowBuyerPicker] = useState(false);
+  const [date,   setDate]   = useState(todayString());
+  const [status, setStatus] = useState<OrderStatus>('pending');
+  const [rows,   setRows]   = useState<Row[]>([emptyRow()]);
+  const [saving, setSaving] = useState(false);
 
   // Load buyers + fish suggestions
   useEffect(() => {
@@ -375,7 +576,7 @@ export default function NewSalesOrderScreen() {
       );
       console.log('✅ Sales order created:', orderId);
       await new Promise((r) => setTimeout(r, 100));
-(navigation as any).replace('OrderDetail', { orderId });
+      (navigation as any).replace('OrderDetail', { orderId });
     } catch (err) {
       console.error('❌ Create order error:', err);
       Alert.alert('Error', String(err));
@@ -383,10 +584,6 @@ export default function NewSalesOrderScreen() {
       setSaving(false);
     }
   };
-
-  const selectedBuyer = buyerList.find(
-    (b: { id: number; name: string; type: string }) => b.id === selectedBuyerId
-  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surface }} edges={['bottom']}>
@@ -419,110 +616,43 @@ export default function NewSalesOrderScreen() {
             padding: Spacing.md,
             marginBottom: Spacing.md,
           }}>
-            {/* Buyer picker */}
+            {/* Buyer search picker */}
             <Text style={{
               fontSize: 11, fontWeight: '700', letterSpacing: 0.8,
               color: Colors.onSurfaceVariant, marginBottom: Spacing.sm,
+              textTransform: 'uppercase',
             }}>
-              BUYER
+              Buyer
             </Text>
-            <TouchableOpacity
-              onPress={() => setShowBuyerPicker(!showBuyerPicker)}
-              style={{
-                backgroundColor: Colors.surfaceContainerLowest,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: selectedBuyerId ? Colors.secondary : Colors.outlineVariant,
-                padding: Spacing.md,
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: showBuyerPicker ? 0 : Spacing.md,
-              }}
-            >
-              <Text style={{
-                fontSize: 15,
-                color: selectedBuyerId ? Colors.onSurface : Colors.outline,
-                fontWeight: selectedBuyerId ? '500' : '400',
-              }}>
-                {selectedBuyer ? selectedBuyer.name : 'Select buyer...'}
-              </Text>
-              <Text style={{ color: Colors.outline }}>
-                {showBuyerPicker ? '▲' : '▼'}
-              </Text>
-            </TouchableOpacity>
 
-            {/* Dropdown */}
-            {showBuyerPicker && (
-              <View style={{
-                backgroundColor: Colors.surfaceContainerLowest,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: Colors.outlineVariant,
-                marginBottom: Spacing.md,
-                overflow: 'hidden',
-              }}>
-                {buyerList.length === 0 ? (
-                  <View style={{ padding: Spacing.md }}>
-                    <Text style={{ fontSize: 14, color: Colors.outline }}>
-                      No buyers found. Add one first.
-                    </Text>
-                  </View>
-                ) : (
-                  buyerList.map((b: { id: number; name: string; type: string }) => (
-                    <TouchableOpacity
-                      key={b.id}
-                      onPress={() => {
-                        setSelectedBuyerId(b.id);
-                        setShowBuyerPicker(false);
-                      }}
-                      style={{
-                        padding: Spacing.md,
-                        borderBottomWidth: 1,
-                        borderBottomColor: Colors.outlineVariant,
-                        backgroundColor:
-                          selectedBuyerId === b.id
-                            ? Colors.secondaryContainer
-                            : Colors.surfaceContainerLowest,
-                      }}
-                    >
-                      <Text style={{ fontSize: 15, fontWeight: '500', color: Colors.onSurface }}>
-                        {b.name}
-                      </Text>
-                      <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant }}>
-                        {b.type.charAt(0).toUpperCase() + b.type.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))
-                )}
-              </View>
-            )}
+            <BuyerSearchPicker
+              buyerList={buyerList}
+              selectedId={selectedBuyerId}
+              onSelect={setSelectedBuyerId}
+            />
 
             {/* Date */}
             <Text style={{
               fontSize: 11, fontWeight: '700', letterSpacing: 0.8,
               color: Colors.onSurfaceVariant, marginBottom: Spacing.sm,
+              textTransform: 'uppercase',
             }}>
-              DATE
+              Date
             </Text>
-            <TextInput
-              style={{
-                backgroundColor: Colors.surfaceContainerLowest,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: Colors.outlineVariant,
-                paddingHorizontal: Spacing.md,
-                paddingVertical: 12,
-                fontSize: 15,
-                color: Colors.onSurface,
-              }}
-              value={date}
-              onChangeText={setDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={Colors.outline}
-              keyboardType="numeric"
-              maxLength={10}
-            />
+            <View style={{
+              backgroundColor: Colors.surfaceContainerLowest,
+              borderRadius: 10, borderWidth: 1, borderColor: Colors.outlineVariant, overflow: 'hidden',
+            }}>
+              <TextInput
+                style={{ paddingHorizontal: Spacing.md, paddingVertical: 12, fontSize: 15, color: Colors.onSurface }}
+                value={date}
+                onChangeText={setDate}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={Colors.outline}
+                keyboardType="numeric"
+                maxLength={10}
+              />
+            </View>
             <Text style={{ fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 4 }}>
               📅 {formatDisplay(date)}
             </Text>
@@ -538,8 +668,9 @@ export default function NewSalesOrderScreen() {
             <Text style={{
               fontSize: 11, fontWeight: '700', letterSpacing: 0.8,
               color: Colors.onSurfaceVariant, marginBottom: Spacing.sm,
+              textTransform: 'uppercase',
             }}>
-              ORDER STATUS
+              Order Status
             </Text>
             <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
               {STATUS_OPTIONS.map((s) => (
